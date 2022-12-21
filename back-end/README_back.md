@@ -1,7 +1,7 @@
-############################### REPO REFERENCIA ###############################
+# REPO REFERENCIA 
 https://github.com/vertigobr/ethereum
 
-############################### FLUJO PRINCIPAL SECUENCIA ##############################
+# FLUJO PRINCIPAL SECUENCIA 
 ## 1 - Create new Network (includes 1 node deafult como en la diapo )
 createNetworK.js
 ## 1.1 - Remove Existing Node
@@ -27,7 +27,7 @@ removeNetwork.js
 ## 3 - Add Node
 addNode.js
 
-############################### QUICK ACCESS DOCKER COMMANDS ##############################
+# QUICK ACCESS DOCKER COMMANDS
 
 ## 1.1 - Remove Existing Node
 docker stop node
@@ -57,14 +57,14 @@ https://geth.ethereum.org/docs/rpc/ns-personal#personal_unlockaccount
 docker exec eth2 geth attach
 
 
-############################### OTROS LINKS ##############################
+# OTROS LINKS
 https://ethereum.stackexchange.com/questions/2226/how-to-backup-account-information-from-geth-in-a-docker-container
 https://github.com/0x0I/container-file-geth
 https://gist.github.com/0x0I/5887dae3cdf4620ca670e3b194d82cba
 https://www.digitalocean.com/community/tutorials/how-to-use-docker-exec-to-run-commands-in-a-docker-container
 https://ethereum.stackexchange.com/questions/99257/how-to-access-ethereum-client-go-shell-outside-docker-container
 
-############################### EXECUTE DOCKER SHELL ##############################
+# EXECUTE DOCKER SHELL 
 docker exec -it eth2 /bin/sh
 //need to locate geth.ipc to launch console
 ls
@@ -77,31 +77,31 @@ admin.nodeInfo
 find / -name "account"
 
 
-############################### GETH COMMANDS V DOCKER COMMANDS ##############################
+# GETH COMMANDS V DOCKER COMMANDS (DIAPOS)
 ## Create Account 
-# GETH
+### GETH
 geth --datadir nodo1 account new --password ./pwd.txt
-# DOCKER
+### DOCKER
 docker run -d ethereum/client-go geth --datadir nodo1 account new --password ./pwd.txt
 docker exec eth-node-02 geth --datadir nodo1 account new --password /nodo1/pwd.txt
 
 ## Init node DB
-# GETH
+### GETH
 geth init --datadir nodo1 ./curso.json
-# DOCKER (se puede quitar los puertos)
+### DOCKER (se puede quitar los puertos)
 docker run -d -p 8545:8545 -p 30303:30303 -v $(pwd)/nodo1:/nodo1 -v $(pwd)/curso.json:/curso.json -v $(pwd)/curso.json:/curso.json --name eth1 ethereum/client-go init --datadir nodo1 /curso.json 
 
 ## Init node
-# GETH
+### GETH
 geth --datadir nodo1 --syncmode full --http --http.api admin,eth,miner,net,txpool,personal --http.port 8545 --allow-insecure-unlock --unlock '0x4756f6556396add3ff30e9c35bb0e5e4d21c1cf3' --password pwd.txt --bootnodes 'enode://3911b1c4ba036e44119f959fca3ddceee0b2e7ec326e97d77a1870ddfc50019653e0789a209272772de3e35de7fbd27ee1e0553954fac911858491c85abae71e@127.0.0.1:0?discport=30301'
-# DOCKER (se puede quitar los puertos)
+### DOCKER (se puede quitar los puertos)
 docker run -d -p 8545:8545 -p 30303:30303 -v $(pwd)/data:/data --name eth-node-01 ethereum/client-go --datadir data --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --mine --miner.etherbase 0xff21E724B7D483fc93708855AbE6ee4f1eD97BF3 --miner.threads=1
 
 
 ## Boot Node
-# GETH
+### GETH
 bootnode --genkey=boot-key
 bootnode --verbosity=9 --nodekey=boot-key
-# DOCKER (se puede quitar los puertos)
+### DOCKER (se puede quitar los puertos)
 docker run --rm -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --genkey /opt/bootnode/boot.key
 docker run -d --name ethereum-bootnode -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=3
