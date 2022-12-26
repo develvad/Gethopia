@@ -1,3 +1,5 @@
+import {Link} from 'react-router-dom'
+
 const SideBar = () => {
     return (
         <>
@@ -13,27 +15,35 @@ const SideBar = () => {
                 </header>
                 <ul className="dash-nav-list">
                     <li className="dash-nav-item active">
-                        <a href="#">
+                        <a href="/redes">
                             <span className="icon pe-7s-helm"></span>
-                            <span className="dash-nav-item-text">Redes</span>
+                            <span className="dash-nav-item-text">Redes</span> 
                         </a>
                     </li>
                     <li className="dash-nav-item">
-                        <a href="#">
+                        <a href="explorador">
                             <span className="icon pe-7s-note2"></span>
-                            <span className="dash-nav-item-text">Nodos</span>
+                            <span className="dash-nav-item-text">Explorador</span>
                         </a>
                     </li>
                     <li className="dash-nav-item">
-                        <a href="#">
+                        <a href="personal">
                             <span className="icon pe-7s-plus"></span>
-                            <span className="dash-nav-item-text">Cuentas</span>
+                            <span className="dash-nav-item-text">Área personal</span>
+                        </a>
+                    </li>
+                    <li className="dash-nav-item">
+                        <a href="faucet">
+                            <span className="icon pe-7s-plus"></span>
+                            <span className="dash-nav-item-text">Faucet</span>
                         </a>
                     </li>
                 </ul>
-                <footer className="dash-nav-tools">
-                    <a href="#"><span className="icon fa fa-cog"></span></a>
+                <footer className="dash-nav-tools d-flex justify-content-between">
                     <a href="#"><span className="icon fa fa-question-circle"></span></a>
+                    <a href="#"><span className="icon fa fa-user-secret"></span></a>
+                    <a href="#"><span className="icon fa fa-file-contract"></span></a>
+                    <a href="#"><span className="icon fa fa-solid fa-hashtag"></span></a>
                 </footer>
             </nav>
 

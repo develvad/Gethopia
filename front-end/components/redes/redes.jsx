@@ -1,9 +1,11 @@
-const Main = () => {
+import { Outlet } from 'react-router-dom'
+
+const Redes = () => {
 
     return (
         <main>
             <header className="dash-titlebar">
-                <a href="#" className="btn btn-icon btn-accent-2 ml-md-auto">
+                <a href="nuevared" className="btn btn-icon btn-accent-2 ml-md-auto">
                     <span className="btn-icon-label">Crear Nueva Red</span>
                 </a>
             </header>
@@ -28,7 +30,7 @@ const Main = () => {
                             <td>
                                 <input type="checkbox" value="option-1" />
                             </td>
-                            <td><a href="#">Red1</a></td>
+                            <td><a href="#">Red 1</a></td>
                             <td>POA</td>
                             <td className="table-td-select">
                                 <select className="form-control" id="example-select-2">
@@ -51,6 +53,9 @@ const Main = () => {
                                 </a>
                                 <a href="#" className="btn btn-icon btn-accent-2 btn-sm mx-1">
                                     <span className="icon icon-xs fa fa-stop"></span>
+                                </a>
+                                <a href="#" className="btn btn-icon btn-danger btn-sm">
+                                    <span className="icon icon-xs fa fa-trash"></span>
                                 </a>
                             </td>
                         </tr>
@@ -82,6 +87,9 @@ const Main = () => {
                                 <a href="#" className="btn btn-icon btn-accent-2 btn-sm mx-1">
                                     <span className="icon icon-xs fa fa-stop"></span>
                                 </a>
+                                <a href="#" className="btn btn-icon btn-danger btn-sm">
+                                    <span className="icon icon-xs fa fa-trash"></span>
+                                </a>
                             </td>
                         </tr>
 
@@ -89,9 +97,12 @@ const Main = () => {
                     </table>
                 </div>
             </div>
+            <div>
+                <Outlet/>
+            </div>   
         </main>
 
     )
 }
 
-export default Main;
+export default Redes;
