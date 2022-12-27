@@ -16,7 +16,7 @@ const NuevaRed = () => {
 
     return(
         <div>
-            <h3 className='mx-2'>Nueva Red</h3>
+            <h3 className='mx-2 my-2'>Nueva red</h3>
             <form onSubmit={handleSubmit(alPulsar)}>
                 <div className="form-group mx-2">
                     <label>Introduzca número de nodos</label>
