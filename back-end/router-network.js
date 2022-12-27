@@ -6,12 +6,17 @@ const { execSync } = require('child_process')
 
 module.exports = router
 
+const BALANCE = "0x200000000000000000000000000000000000000000000000000000000000000"
+const FAUCET_ADDRESS = "A9c13244c9e66Ca2a061C500447C06b2698B7aE2"
+//const MICUENTA = "704765a908962e25626f2bea8cdf96c84dedaa0b"
+
+
 function createParams(network, node) {
     const INT_NETWORK = parseInt(network)
     const INT_NODE = parseInt(node)
     const NODE = `nodo${INT_NODE}`
     const NETWORK_DIR = `network${INT_NETWORK}`
-    const NETWORK_CHAINID = 161616 + INT_NETWORK
+    const NETWORK_CHAINID = 161615 + INT_NETWORK
 
     const HTTP_PORT = 8545 + INT_NODE + INT_NETWORK
     const DIR_NODE = `${NETWORK_DIR}/${NODE}`
@@ -23,86 +28,6 @@ function createParams(network, node) {
         INT_NETWORK, INT_NODE, NODE, NETWORK_DIR, NETWORK_CHAINID, HTTP_PORT,
         DIR_NODE, PORT, AUTHRPC_PORT
     }
-}
-
-function createNodeDirectory(network, node) {
-
-    if (!fs.existsSync(network))
-        fs.mkdirSync(network)
-    if (!fs.existsSync(node))
-        fs.mkdirSync(node)
-}
-function deleteNodeDirectory(network, node) {
-    if (fs.existsSync(network))
-        fs.rm(network, { recursive: true }, (err) => {
-            if (err) {
-                // File deletion failed
-                console.error(err.message);
-                return;
-            }
-            console.log("File deleted successfully");
-
-        })
-}
-
-function generateGenesis(params) {
-    const timestamp = Math.round(((new Date()).getTime() / 1000)).toString(16)
-    // read genesis_template
-    let genesis_file = JSON.parse(fs.readFileSync('genesis_template.json').toString())
-    return genesis_file
-
-    // genesis.timestamp = `0x${timestamp}`
-    genesis.config.chainId = NETWORK_CHAINID
-    genesis.extraData = `0x${'0'.repeat(64)}${CUENTA}${'0'.repeat(130)}`
-
-
-    genesis.alloc = CUENTAS_ALLOC.reduce((acc, item) => {
-        acc[item] = { balance: BALANCE }
-        return acc
-    }, {})
-
-
-    fs.writeFileSync(`${NETWORK_DIR}/genesis.json`, JSON.stringify(genesis))
-
-}
-
-
-
-// Create a Node
-
-function createNetwork(network_id, faucet_address) {
-
-    //create unique reference for node
-    const node_number = 1
-    const node = (network_id + node_number)
-
-    // If node exists, 
-    // removeNode (check can probably be done in front end), delete container
-    //// removeNode(network_id, node_number)
-
-    // remove Node DB, delete directory (if no access rights just leave)
-    //// removeNodeDB()
-
-    // create boot node
-    createBootNode()
-
-    // Create Genesis State for new network
-    //OPTIONAL to add custom faucet with faucet_address, otherwise grab default
-    createGenesis(network_id, faucet_address)
-
-    // Init first node to with genesis state and initiallize DB
-    const docker_init_node_DB = "docker run -d --rm -v $(pwd)/nodo1:/root/.ethereum -v $(pwd)/genesis.json:/opt/genesis.json ethereum/client-go init /opt/genesis.json"
-
-    //  Init first node (First should be miner so need to adapt to include --mine --miner.etherbase ADDRESS --miner.threads=1)
-    const docker_init_node = "docker run -d -p 8545:8545 -p 30303:30303 -v $(pwd)/nodo1:/nodo1 --name eth2 ethereum/client-go --datadir nodo1 --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --allow-insecure-unlock --graphql --bootnodes 'enode://fa27e7e91856d24c3486f6ef853bacd1be88fbd51480cb7a0abdbd73090e577f8c6bdeec9ed2fab679ee8808e47e8f0254cc56e9ee451424dae519beafbbf858@127.0.0.1:0?discport=30301'"
-
-    // Create address 
-    const docker_address = "docker exec eth2 geth --datadir nodo1 account new --password /nodo1/pwd.txt"
-
-    // Init first node to with genesis state
-
-    return genesis
-
 }
 
 function createBootNode(network_name) {
@@ -129,24 +54,88 @@ function createBootNode(network_name) {
     return bootnode_enode
 }
 
-function initNodeDB() {
+
+function createNodeDirectory(network_path, node_path) {
+    console.log("Creating Directory");
+    if (!fs.existsSync(network_path))
+        fs.mkdirSync(network_path)
+    if (!fs.existsSync(node_path))
+        fs.mkdirSync(node_path)
+}
+
+function deleteNodeDirectory(network_path, node_path) {
+    fs.rmSync(network_path, { recursive: true }, (err) => {
+        if (err) {
+            // File deletion failed
+            console.error(err.message);
+            console.log("Nothing to Delete");
+            return;
+        }
+        console.log("Deleted successfully");
+
+    })
+    // //temp dummy function to wait for delete
+    // init()    
+}
+
+async function init() {
+    console.log(1);
+    await sleep(1000);
+    console.log(2);
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+}
+
+function createAddress(node_path, node_name) {
 
     // Init first node to with genesis state and initiallize DB
-    const docker_init_node_DB = "docker run -d --rm -v $(pwd)/nodo1:/nodo1 -v $(pwd)/genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir nodo1 /genesis.json"
+    const docker_createAddress = `docker run --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
+    execSync(docker_createAddress)
+
+    const lista = fs.readdirSync(`${node_path}/keystore`)
+    const address = JSON.parse(fs.readFileSync(`${node_path}/keystore/${lista[0]}`).toString()).address
+
+    return address
+}
+//docker run --rm -v $(pwd)/nodo1:/nodo1  -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir nodo1 account list --keystore nodo1/keystore/
+
+
+
+function generateGenesis(chain_id, signer_address, alloc_addresses, network_path) {
+    //const timestamp = Math.round(((new Date()).getTime() / 1000)).toString(16)
+    // leemos la plantilla del genesis
+    let genesis = JSON.parse(fs.readFileSync('genesis_template.json').toString())
+
+    // genesis.timestamp = `0x${timestamp}`
+    genesis.config.chainId = chain_id
+    genesis.extraData = `0x${'0'.repeat(64)}${signer_address}${'0'.repeat(130)}`
+
+
+    genesis.alloc = alloc_addresses.reduce((acc, item) => {
+        acc[item] = { balance: BALANCE }
+        return acc
+    }, {})
+
+
+    fs.writeFileSync(`${network_path}/genesis.json`, JSON.stringify(genesis))
+
+    const final_genesis = JSON.parse(fs.readFileSync(`${network_path}/genesis.json`).toString())
+    return final_genesis
+}
+
+
+function initNodeDB(node_path, node_name, network_name) {
+
+    // Init first node to with genesis state and initiallize DB
+    const docker_init_node_DB = `docker run -d --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/${network_name}/genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir ${node_name} /genesis.json`
     const initnode = execSync(docker_init_node_DB)
 
     return initnode
 }
-
-function createAddress(dir_node) {
-
-    // Init first node to with genesis state and initiallize DB
-    const docker_createAddress = `docker run --rm -v $(pwd)/${dir_node}:/nodo1 -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir nodo1 account new --password /pwd.txt`
-    const address = execSync(docker_createAddress)
-
-    return address
-}
-
 
 function startNode() {
 
@@ -157,26 +146,6 @@ function startNode() {
     return startNode
 }
 
-// function generateGenesis(NETWORK_CHAINID, CUENTA, BALANCE, CUENTAS_ALLOC, NETWORK_DIR) {
-//     const timestamp = Math.round(((new Date()).getTime() / 1000)).toString(16)
-//     // leemos la plantilla del genesis
-//     let genesis = JSON.parse(fs.readFileSync('genesisbase.json').toString())
-
-//     // genesis.timestamp = `0x${timestamp}`
-//     genesis.config.chainId = NETWORK_CHAINID
-//     genesis.extraData = `0x${'0'.repeat(64)}${CUENTA}${'0'.repeat(130)}`
-
-
-//     genesis.alloc = CUENTAS_ALLOC.reduce((acc, item) => {
-//         acc[item] = { balance: BALANCE }
-//         return acc
-//     }, {})
-
-
-//     fs.writeFileSync(`${NETWORK_DIR}/genesis.json`, JSON.stringify(genesis))
-
-// }
-
 
 
 // I'm the network
@@ -186,12 +155,6 @@ router.post("/createNetwork/:network", (req, res) => {
     //const FAUCET_ADDRESS = parseInt(req.params.address)    
     //const FAUCET_ADDRESS = req.body.address
 
-
-
-    //const FAUCET_ADDRESS = req.params.address    
-    //const extraData = `0x${'0'.repeat(64)}${FAUCET_ADDRESS}${'0'.repeat(130)}`
-    //console.log(extraData);
-
     //CREATE BOOT NODE --> Not needed for V1
     //const bootnode = createBootNode()
 
@@ -199,21 +162,34 @@ router.post("/createNetwork/:network", (req, res) => {
     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
 
     //Initialize directory
-    deleteNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
+    if (fs.existsSync(params.NETWORK_DIR)) {
+        console.log("Directory Exists");
+        deleteNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
+    }
     createNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
-
+    
     //createAddress
-    const signer_address = createAddress(params.DIR_NODE)
-    res.status(200).send({ signer_address: signer_address });
-    
-    //generateGenesis(NETWORK_CHAINID, CUENTA, BALANCE, CUENTAS_ALLOC, NETWORK_DIR)
-    //const genesis_result = generateGenesis(params)
-    //res.status(200).send({ genesis_result: genesis_result });
-
-
-    // const initnodeDB = initNodeDB()
+    const signer_address = createAddress(params.DIR_NODE, params.NODE)
+    //res.status(200).send({ signer_address: signer_address });
 
     
+    //create Allocated Addresses
+    const alloc_addresses = [
+        signer_address,
+        FAUCET_ADDRESS
+    ]  
+
+    //create genesis state from genesis_template
+    const genesis_file = generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
+    //res.status(200).send({ genesis_file: genesis_file});
+
+    
+    //initialize nodeDB
+    const initnodeDB = initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
+    //res.status(200).send({initnodeDB: initnodeDB.toString()});
+    res.status(200).send({initnodeDB: initnodeDB.toString()});
+
+
 
     // //0x916353E14189A4bF8C57CEbE65aA357585f64c71
 
