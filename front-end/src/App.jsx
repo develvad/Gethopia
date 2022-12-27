@@ -14,7 +14,11 @@ function App() {
   return (
     <div className="App">
       <div className="dash" role="application">
-        <SideBar />
+          {/* <BrowserRouter>
+            <Routes>
+              <Route path="*" element={<SideBar />}/>
+            </Routes>
+          </BrowserRouter>         */}
         <div className="dash-app" id="dash-nav">
           <Header />
           <BrowserRouter>

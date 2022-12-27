@@ -14,29 +14,47 @@ const SideBar = () => {
                     </div>
                 </header>
                 <ul className="dash-nav-list">
-                    <li className="dash-nav-item active">
+                    {/* <li className="dash-nav-item active">
                         <a href="/redes">
-                            <span className="icon pe-7s-helm"></span>
-                            <span className="dash-nav-item-text">Redes</span> 
+                            <span className="fa-solid fa-network-wired"></span>
+                            <span className="mx-2 dash-nav-item-text">Redes</span> 
                         </a>
+                    </li> */}
+                    <li className="dash-nav-item">      
+                        <span className="fa-solid fa-network-wired"></span>
+                        <span>           
+                            <Link className='mx-2' to="/redes">Redes</Link>
+                        </span>      
                     </li>
                     <li className="dash-nav-item">
-                        <a href="explorador">
+                        {/* <a href="explorador">
                             <span className="icon pe-7s-note2"></span>
                             <span className="dash-nav-item-text">Explorador</span>
-                        </a>
+                        </a> */}    
+                        <span className="fa-solid fa-magnifying-glass"></span>
+                        <span>           
+                            <Link className='mx-2' to="/explorador">Explorador</Link>
+                        </span>      
                     </li>
                     <li className="dash-nav-item">
-                        <a href="personal">
+                        {/* <a href="personal">
                             <span className="icon pe-7s-plus"></span>
                             <span className="dash-nav-item-text">Área personal</span>
-                        </a>
+                        </a> */}  
+                        <span className="fa-solid fa-user"></span>
+                        <span>           
+                            <Link className='mx-2' to="/personal">Área personal</Link>
+                        </span>      
                     </li>
                     <li className="dash-nav-item">
-                        <a href="faucet">
+                        {/* <a href="faucet">
                             <span className="icon pe-7s-plus"></span>
                             <span className="dash-nav-item-text">Faucet</span>
-                        </a>
+                        </a> */}
+                        <span className="fa-solid fa-faucet"></span>
+                        <span>           
+                            <Link className='mx-2' to="/faucet">Faucet</Link>
+                        </span>      
                     </li>
                 </ul>
                 <footer className="dash-nav-tools d-flex justify-content-between">
