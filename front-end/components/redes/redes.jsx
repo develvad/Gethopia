@@ -6,7 +6,7 @@ const Redes = () => {
         <main>
             <header className="dash-titlebar">
                 <span className='btn btn-icon btn-accent-2 ml-md-auto'>           
-                    <Link className='btn-icon-label' to="nuevared">Crear nueva red</Link>
+                    <Link className='btn-icon-label' to="/nuevared">Crear nueva red</Link>
                 </span>      
                 {/* <a href="nuevared" className="btn btn-icon btn-accent-2 ml-md-auto">
                     <span className="btn-icon-label">Crear Nueva Red</span>
