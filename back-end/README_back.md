@@ -1,5 +1,6 @@
 # REPO REFERENCIA 
 https://github.com/vertigobr/ethereum
+https://github.com/dawar2151/ethereum-docker/blob/master/start.sh 
 
 # FLUJO PRINCIPAL SECUENCIA 
 ## 1 - Create new Network (includes 1 node deafult como en la diapo )
@@ -33,28 +34,81 @@ addNode.js
 docker stop node
 docker remove node
 
-## 1.3 - Create Bootnode
-docker run --rm -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --genkey /opt/bootnode/boot.key
-docker run -d --name ethereum-bootnode -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=3
-docker logs ethereum-bootnode 2>&1 | grep enode | head -n 1
+## 1.2 - Obtain node for enode
+docker run --rm -v $(pwd)/nodo1:/nodo1 ethereum/client-go:alltools-latest bootnode --nodekey /nodo1/geth/nodekey -writeaddress
+
+    "enode://989e1ef2cbe67f8b34781f4204d1ff83646aba36566627e081378d0783ea58613cd79ad6fdf0f02c67149c90e0634fa9ee32cf0aef0075e0d451034e0e62ce2d@127.0.0.1:30303"
+    docker run --rm -v $(pwd)/nodo2:/nodo2 ethereum/client-go:alltools-latest bootnode --nodekey /nodo2/geth/nodekey -writeaddress
+    "enode://b5279d2fc22094a2b33e1161473da571046cd0359e8191b21d5e4526c4fb401419e17928cab26ee82aa1d616ee0f6d4fb130fe8b7ce4227dac205e376c62b1f1@127.0.0.1:30304"
+    docker run --rm -v $(pwd)/nodo3:/nodo3 ethereum/client-go:alltools-latest bootnode --nodekey /nodo3/geth/nodekey -writeaddress
+    "enode://0a7c421e9af3e542857efc351b44561114774bc206bf6033fb446675aab15e43c3504289730ff111b68b6d2fbbfefbc24d796d0f1086a076a88593d279813631@127.0.0.1:30305"
+
+Obviously, to store the complete enode in a variable you need to have access to the IP and the port in bash:
+
+ PORT=<insert-the-port-of-the-node>
+ IP_ADDRESS=<insert-the-ip-of-the-machine>
+ NODEKEY=$(bootnode -nodekey <your-node-key-file> -writeaddress)
+
+ ENODE_ADDRESS="enode://$NODEKEY@$IP_ADDRESS:$PORT"
+
+
+    ## 1.3 - Create Bootnode
+    docker run --rm -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --genkey /opt/bootnode/boot.key
+    docker run -p 30301:30301 --name ethereum-bootnode -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=9
+    docker logs ethereum-bootnode 2>&1 | grep enode | head -n 1
+
+
+    docker run -p 30301:30301 -p 30303:30303/udp --name ethereum-bootnode -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=9
+    docker run -p 30301:30301 --name ethereum-bootnode -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=9 --addr 0.0.0.0:30310
+
 
 ## 1.5 - Init Node DB (Docker) (Con una alternativa para lectura facil)
-docker run -d --rm -v $(pwd)/nodo1:/nodo1 -v $(pwd)/curso.json:/curso.json -v $(pwd)/curso.json:/curso.json  --name hello ethereum/client-go init --datadir nodo1 /curso.json
+docker run -d --rm -v $(pwd)/nodo1:/nodo1 -v $(pwd)/genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir nodo1 /genesis.json
 
 docker run -d --rm \
 -v $(pwd)/nodo1:/root/.ethereum \
 -v $(pwd)/genesis.json:/opt/genesis.json \
 ethereum/client-go init /opt/genesis.json 
 
-## 1.6 - Geth Init Node (Docker) (First should be miner so need to adapt to include --mine --miner.etherbase ADDRESS --miner.threads=1)
-docker run -d -p 8545:8545 -p 30303:30303 -v $(pwd)/nodo1:/nodo1 --name eth2 ethereum/client-go --datadir nodo1 --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --allow-insecure-unlock --graphql --bootnodes 'enode://fa27e7e91856d24c3486f6ef853bacd1be88fbd51480cb7a0abdbd73090e577f8c6bdeec9ed2fab679ee8808e47e8f0254cc56e9ee451424dae519beafbbf858@127.0.0.1:0?discport=30301'
+## 1.5 BIS Node 2 & 3
+docker run -d --rm -v $(pwd)/nodo2:/nodo2 -v $(pwd)/genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir nodo2 /genesis.json
+docker run -d --rm -v $(pwd)/nodo3:/nodo3 -v $(pwd)/genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir nodo3 /genesis.json
 
-## 1.7 - Crear Addresses (Docker)
-docker exec eth2 geth --datadir nodo1 account new --password /nodo1/pwd.txt 
+## 1.6 - Crear Addresses (Docker)
+docker run --rm -v $(pwd)/nodo1:/nodo1 -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir nodo1 account new --password /pwd.txt 
+docker run --rm -v $(pwd)/nodo2:/nodo2 -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir nodo2 account new --password /pwd.txt 
+docker run --rm -v $(pwd)/nodo3:/nodo3 -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir nodo3 account new --password /pwd.txt 
 
-## 1.8 - Crear Addresses (Docker)
-https://geth.ethereum.org/docs/rpc/ns-personal#personal_unlockaccount
-docker exec eth2 geth attach
+
+## 1.6.1 Store resulting address (Can read filename and last 40 characters)
+nodo1--'0xa1acd1cacab4e8eb12f8bbe11e6b4ae6d3d8937c'
+nodo2--'0x643E40573e5dCe3489ffC7A26759442dffaC9694'
+nodo3--'0x77b5168A7EE06d1406CBEC99C5c70085a92D8c71'
+
+
+    ## 1.6 BIS - Crear Addresses (Docker)
+    docker exec eth2 geth --datadir nodo1 account new --password /nodo1/pwd.txt 
+    https://geth.ethereum.org/docs/rpc/ns-personal#personal_unlockaccount
+    docker exec eth2 geth attach
+
+
+## 1.7 - Geth Init Node (Docker) as Miner
+docker run -p 8545:8545 -p 30303:30303 -v $(pwd)/nodo1:/nodo1 -v $(pwd)/pwd.txt:/pwd.txt --name eth2 ethereum/client-go --datadir nodo1 --nodiscover --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --http.corsdomain '*' --allow-insecure-unlock --unlock '0xa1acd1cacab4e8eb12f8bbe11e6b4ae6d3d8937c' --password /pwd.txt --graphql --mine --miner.etherbase '0xd599c07d56Af479C72A4B8F68E62B1Eb49507A99' --miner.threads=2 --bootnodes 'enode://48b4515deeb86d88aef15eb29cc86f94ed01de7a9f9b3002c2c1e094a404aff006d5b9d844206da5031c2e4dcd07473168f6cee1a3a37a70940a4c59d52d0adb@127.0.0.1:0?discport=30301'
+
+## 1.7.1 
+docker run -p 8545:8545 -p 30303:30303 -v $(pwd)/nodo1:/nodo1 -v $(pwd)/pwd.txt:/pwd.txt --name eth2 ethereum/client-go --datadir nodo1 --nodiscover --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --http.corsdomain '*' --allow-insecure-unlock --unlock '0xa1acd1cacab4e8eb12f8bbe11e6b4ae6d3d8937c' --password /pwd.txt --graphql --mine --miner.threads=2 --bootnodes 'enode://48b4515deeb86d88aef15eb29cc86f94ed01de7a9f9b3002c2c1e094a404aff006d5b9d844206da5031c2e4dcd07473168f6cee1a3a37a70940a4c59d52d0adb@127.0.0.1:0?discport=30301'
+
+
+## 1.7 BIS Node 2
+docker run -p 8546:8546 -p 30304:30304 -v $(pwd)/nodo2:/nodo2 -v $(pwd)/pwd.txt:/pwd.txt --name eth3 ethereum/client-go --port 30304 --authrpc.port 8552 --http.port 8546 --datadir nodo2 --nodiscover --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8546 --http.corsdomain '*' --allow-insecure-unlock --unlock '0x643E40573e5dCe3489ffC7A26759442dffaC9694' --password /pwd.txt --graphql --bootnodes 'enode://48b4515deeb86d88aef15eb29cc86f94ed01de7a9f9b3002c2c1e094a404aff006d5b9d844206da5031c2e4dcd07473168f6cee1a3a37a70940a4c59d52d0adb@127.0.0.1:0?discport=30301'
+
+docker run -p 8547:8547 -p 30305:30305 -v $(pwd)/nodo3:/nodo3 -v $(pwd)/pwd.txt:/pwd.txt --name eth4 ethereum/client-go --port 30305 --authrpc.port 8553 --http.port 8547 --datadir nodo3 --nodiscover --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8547 --http.corsdomain '*' --allow-insecure-unlock --unlock '0x77b5168A7EE06d1406CBEC99C5c70085a92D8c71' --password /pwd.txt --graphql --bootnodes 'enode://48b4515deeb86d88aef15eb29cc86f94ed01de7a9f9b3002c2c1e094a404aff006d5b9d844206da5031c2e4dcd07473168f6cee1a3a37a70940a4c59d52d0adb@127.0.0.1:0?discport=30301'
+
+
+
+%%%%%%%%%%%docker run -d -p 8546:8545 -p 30304:30303 -v $(pwd)/nodo1:/nodo1 --name eth2 ethereum/client-go --datadir nodo1 --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --allow-insecure-unlock --graphql --bootnodes 'enode://fa27e7e91856d24c3486f6ef853bacd1be88fbd51480cb7a0abdbd73090e577f8c6bdeec9ed2fab679ee8808e47e8f0254cc56e9ee451424dae519beafbbf858@127.0.0.1:0?discport=30301'
+
+
 
 
 # OTROS LINKS
@@ -63,6 +117,13 @@ https://github.com/0x0I/container-file-geth
 https://gist.github.com/0x0I/5887dae3cdf4620ca670e3b194d82cba
 https://www.digitalocean.com/community/tutorials/how-to-use-docker-exec-to-run-commands-in-a-docker-container
 https://ethereum.stackexchange.com/questions/99257/how-to-access-ethereum-client-go-shell-outside-docker-container
+https://www.polarsparc.com/xhtml/PrivateEthDocker.html
+https://ethereum.stackexchange.com/questions/53086/go-ethereum-get-the-enode-before-starting-geth
+https://medium.com/@pradeep_thomas/how-to-setup-your-own-private-ethereum-network-part-2-3b72dbae3fba
+https://zouhirtaousy.medium.com/build-ethereum-private-network-in-production-with-docker-without-bootnode-d80ff2a280f6
+https://medium.com/@javahippie/building-a-local-ethereum-network-with-docker-and-geth-5b9326b85f37
+
+
 
 # EXECUTE DOCKER SHELL 
 docker exec -it eth2 /bin/sh
@@ -105,3 +166,28 @@ bootnode --verbosity=9 --nodekey=boot-key
 ### DOCKER (se puede quitar los puertos)
 docker run --rm -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --genkey /opt/bootnode/boot.key
 docker run -d --name ethereum-bootnode -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=3
+
+
+
+
+
+
+
+///BUENAS
+
+172.17.0.3
+
+docker run --network host -p 8546:8546 -p 30304:30304 -v $(pwd)/nodo2:/nodo2 -v $(pwd)/pwd.txt:/pwd.txt --name eth3 ethereum/client-go --port 30304 --authrpc.port 8552 --http.port 8546 --datadir nodo2 --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8546 --http.corsdomain '*' --allow-insecure-unlock --unlock '0x643E40573e5dCe3489ffC7A26759442dffaC9694' --password /pwd.txt --graphql --bootnodes 'enode://48b4515deeb86d88aef15eb29cc86f94ed01de7a9f9b3002c2c1e094a404aff006d5b9d844206da5031c2e4dcd07473168f6cee1a3a37a70940a4c59d52d0adb@127.0.0.1:0?discport=30301'
+
+enode://b5279d2fc22094a2b33e1161473da571046cd0359e8191b21d5e4526c4fb401419e17928cab26ee82aa1d616ee0f6d4fb130fe8b7ce4227dac205e376c62b1f1@127.0.0.1:30304
+
+
+docker run --network host -p 8547:8547 -p 30305:30305 -v $(pwd)/nodo3:/nodo3 -v $(pwd)/pwd.txt:/pwd.txt --name eth4 ethereum/client-go --port 30305 --authrpc.port 8553 --http.port 8547 --datadir nodo3 --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --http.corsdomain '*' --allow-insecure-unlock --unlock '0x77b5168A7EE06d1406CBEC99C5c70085a92D8c71' --password /pwd.txt --graphql --bootnodes 'enode://9783bb6601270382075a77954f97dcc15d67cd5c0e4ff2ffadb1aad49f3b7a74394332e4fc1551e356360a481cbc7cd3ec57b5cb5ee0e7e2fe9aa355b9a0b276@127.0.0.1:0?discport=30301'
+
+
+admin.addPeer("enode://b5279d2fc22094a2b33e1161473da571046cd0359e8191b21d5e4526c4fb401419e17928cab26ee82aa1d616ee0f6d4fb130fe8b7ce4227dac205e376c62b1f1@127.0.0.1:30304")
+admin.addPeer("enode://0a7c421e9af3e542857efc351b44561114774bc206bf6033fb446675aab15e43c3504289730ff111b68b6d2fbbfefbc24d796d0f1086a076a88593d279813631@127.0.0.1:30305")
+
+enode://0a7c421e9af3e542857efc351b44561114774bc206bf6033fb446675aab15e43c3504289730ff111b68b6d2fbbfefbc24d796d0f1086a076a88593d279813631@127.0.0.1:30305
+
+

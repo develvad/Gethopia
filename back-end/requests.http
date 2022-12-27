@@ -1,0 +1,2 @@
+POST http://localhost:3000/network/createNetwork/1/a1acd1cacab4e8eb12f8bbe11e6b4ae6d3d8937c
+Content-Type: application/json 
