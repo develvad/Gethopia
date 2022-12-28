@@ -1,16 +1,19 @@
-const express = require("express")
-const router = express.Router()
-const fs = require("fs")
+const express = require("express");
+const router = express.Router();
+const fs = require("node:fs");
+const { Docker } = require('node-docker-api');
+
 //execute cmd Commands
 const { execSync, spawn, spawnSync } = require("child_process");
-const util = require('util');
+const util = require('node:util');
 const exec = util.promisify(require('child_process').exec);
-
+const path = require("node:path")
 module.exports = router
 
 const BALANCE = "0x200000000000000000000000000000000000000000000000000000000000000"
 const FAUCET_ADDRESS = "A9c13244c9e66Ca2a061C500447C06b2698B7aE2"
 //const MICUENTA = "704765a908962e25626f2bea8cdf96c84dedaa0b"
+const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
 
 function createParams(network, node) {
@@ -268,20 +271,46 @@ router.delete("/deleteNetwork/:network", (req, res) => {
 })
 
 // TEMP Create the node
-router.post("/createContainer/:network", (req, res) => {
+router.post("/createContainer/:network", async (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
     const NODE_NUMBER = 1
-
     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-
-    const signer_address = "4dc571cabaf111fdc855f8506e57ad6c13b982eb"
-
-    const goNode = startNode(params, signer_address)
+    const signer_address = await getSignerForNode(req.params.network);
+    const goNode = await startNode(params, signer_address)
     res.status(200).send({goNode: goNode.toString()});
 })
 
-
 // I'm the network
 router.get("/", (req, res) => {
-    res.send("I'm the network")
+    res.send("I'm the network");
 })
+
+// Primero automatizamos el proceso de coger el signer address
+const getSignerForNode = async (id) => {
+    return new Promise((resolve, reject) =>  {
+        fs.readdir(path.join(__dirname) + '/net' + id +  '/net'+ id + 'nodo1' + '/keystore',
+            (err, files) => {
+                if (err) {
+                    console.log ('ERR GET_SIGNER_FOR_NODE: ', err);
+                    reject(err);
+                }
+                const data = fs.readFileSync(path.join(__dirname) + '/net' + id +  '/net'+ id + 'nodo1' + '/keystore/'  + files[0], 'utf8');
+                const { address } = JSON.parse(data);
+                resolve (address)
+            });
+    });
+}
+
+//  Listamos las redes activas.
+router.get('/listAll', (req, res) => {
+    docker.container.list()
+        .then((containers) => {
+            const mapeado = containers.map((e)=> {
+                return {
+                    id: e.data.Id,
+                    name: e.data.Names[0]
+                }
+            });
+            res.send(mapeado);
+        }).catch((e) => res.status(500).send({res: e.message}))
+});
