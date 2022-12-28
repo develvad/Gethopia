@@ -2,7 +2,9 @@ const express = require("express")
 const router = express.Router()
 const fs = require("fs")
 //execute cmd Commands
-const { execSync } = require('child_process')
+const { execSync, spawn, spawnSync } = require("child_process");
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 
 module.exports = router
 
@@ -13,16 +15,16 @@ const FAUCET_ADDRESS = "A9c13244c9e66Ca2a061C500447C06b2698B7aE2"
 
 function createParams(network, node) {
     const INT_NETWORK = parseInt(network)
-    const INT_NODE = parseInt(node)
-    const NODE = `nodo${INT_NODE}`
-    const NETWORK_DIR = `network${INT_NETWORK}`
+    const INT_NODE = parseInt(node)    
+    const NETWORK_DIR = `net${INT_NETWORK}`
+    const NODE = `${NETWORK_DIR}nodo${INT_NODE}`
     const NETWORK_CHAINID = 161615 + INT_NETWORK
 
     const HTTP_PORT = 8545 + INT_NODE + INT_NETWORK
     const DIR_NODE = `${NETWORK_DIR}/${NODE}`
     //const IPCPATH = `\\\\.\\pipe\\${NETWORK_CHAINID}-${NODO}.ipc`
     const PORT = 30303 + INT_NODE + INT_NETWORK
-    const AUTHRPC_PORT = 8553 + INT_NODE + INT_NETWORK
+    const AUTHRPC_PORT = 8552 + INT_NODE + INT_NETWORK
 
     return {
         INT_NETWORK, INT_NODE, NODE, NETWORK_DIR, NETWORK_CHAINID, HTTP_PORT,
@@ -74,20 +76,6 @@ function deleteNodeDirectory(network_path, node_path) {
         console.log("Deleted successfully");
 
     })
-    // //temp dummy function to wait for delete
-    // init()    
-}
-
-async function init() {
-    console.log(1);
-    await sleep(1000);
-    console.log(2);
-}
-
-function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
 }
 
 function createAddress(node_path, node_name) {
@@ -101,7 +89,6 @@ function createAddress(node_path, node_name) {
 
     return address
 }
-//docker run --rm -v $(pwd)/nodo1:/nodo1  -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir nodo1 account list --keystore nodo1/keystore/
 
 
 
@@ -132,23 +119,73 @@ function initNodeDB(node_path, node_name, network_name) {
 
     // Init first node to with genesis state and initiallize DB
     const docker_init_node_DB = `docker run -d --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/${network_name}/genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir ${node_name} /genesis.json`
-    const initnode = execSync(docker_init_node_DB)
+    //const initnode = execSync(docker_init_node_DB)
+    //return docker_init_node_DB
 
-    return initnode
+    async function lsExample() {
+        const { stdout, stderr } = await exec(docker_init_node_DB);
+        console.log('stdout:', stdout);
+        console.error('stderr:', stderr);
+        return stdout;
+    }
+    const result = lsExample();
+    ////process.exit()
+
+    return result
+
 }
 
-function startNode() {
+function delay(time) {
+    return new Promise(resolve => setTimeout(resolve, time));
+}
+
+
+async function startNode(params, signer_address) {
+    await delay(5000);
+    console.log("START NODE");
 
     // Init first node to with genesis state and initiallize DB
-    const docker_startNode = "docker run -d -p 8545:8545 -p 30303:30303 -v $(pwd)/nodo1:/nodo1 -v $(pwd)/pwd.txt:/pwd.txt --name eth2 ethereum/client-go --datadir nodo1 --nodiscover --networkid 19999 --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --http.corsdomain '*' --allow-insecure-unlock --unlock '0x3ee83c6f0b679ab87460365851d67e28f46c210d' --password /pwd.txt --graphql --mine --miner.etherbase '0x9E5CC5E873e31C45779b15974c6F57e365a94C99' --miner.threads=2 --bootnodes 'enode://48b4515deeb86d88aef15eb29cc86f94ed01de7a9f9b3002c2c1e094a404aff006d5b9d844206da5031c2e4dcd07473168f6cee1a3a37a70940a4c59d52d0adb@127.0.0.1:0?discport=30301'"
-    const startNode = execSync(docker_startNode)
+    //const docker_startNode = "docker run -d -p 8545:8545 -p 30303:30303 -v $(pwd)/nodo1:/nodo1 -v $(pwd)/pwd.txt:/pwd.txt --name eth2 ethereum/client-go --datadir nodo1 --nodiscover --networkid 19999 --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --http.corsdomain '*' --allow-insecure-unlock --unlock '0x3ee83c6f0b679ab87460365851d67e28f46c210d' --password /pwd.txt --graphql --mine --miner.etherbase '0x9E5CC5E873e31C45779b15974c6F57e365a94C99' --miner.threads=2 --bootnodes 'enode://48b4515deeb86d88aef15eb29cc86f94ed01de7a9f9b3002c2c1e094a404aff006d5b9d844206da5031c2e4dcd07473168f6cee1a3a37a70940a4c59d52d0adb@127.0.0.1:0?discport=30301'"
+    const docker_startNode =
+        `docker run -d \
+    -p ${params.HTTP_PORT}:${params.HTTP_PORT} \
+    -p ${params.PORT}:${params.PORT} \
+    -v $(pwd)/${params.DIR_NODE}:/${params.NODE} \
+    -v $(pwd)/pwd.txt:/pwd.txt \
+    --name ${params.NODE} ethereum/client-go \
+    --datadir ${params.NODE} \
+    --syncmode full \
+    --http.api personal,eth,net,web3 \
+    --http \
+    --http.addr 0.0.0.0 \
+    -http.port ${params.HTTP_PORT} \
+    --authrpc.port ${params.AUTHRPC_PORT}  \
+    --http.corsdomain '*' \
+    --allow-insecure-unlock \
+    --unlock '0x${signer_address}' \
+    --password /pwd.txt \
+    --graphql \
+    --mine \
+    --miner.threads=2`
+    //const startNode = execSync(docker_startNode)
 
-    return startNode
+    async function lsExample2() {
+        const { stdout, stderr } = await exec(docker_startNode);
+        console.log('stdout:', stdout);
+        console.error('stderr:', stderr);
+        return stdout;
+    }
+    const result2 = lsExample2();
+
+    // const startNode = execSync(docker_startNode).then(i => {
+    //     console.log(docker_startNode);
+    // })
+    return result2
 }
 
 
 
-// I'm the network
+// Create the network
 router.post("/createNetwork/:network", (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
     const NODE_NUMBER = 1
@@ -167,38 +204,80 @@ router.post("/createNetwork/:network", (req, res) => {
         deleteNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
     }
     createNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
-    
+
     //createAddress
     const signer_address = createAddress(params.DIR_NODE, params.NODE)
     //res.status(200).send({ signer_address: signer_address });
 
-    
+
     //create Allocated Addresses
     const alloc_addresses = [
         signer_address,
         FAUCET_ADDRESS
-    ]  
+    ]
 
     //create genesis state from genesis_template
     const genesis_file = generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
     //res.status(200).send({ genesis_file: genesis_file});
 
-    
+
     //initialize nodeDB
     const initnodeDB = initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
+    console.log("Hello");
+    delay(2000)
     //res.status(200).send({initnodeDB: initnodeDB.toString()});
-    res.status(200).send({initnodeDB: initnodeDB.toString()});
 
+    //signer_address = 'b6da28fee3e0cb52df1fe72a74b271b3bc385d38'
+    //start container_node
+    const goNode = startNode(params, signer_address)
+    //res.status(200).send({goNode: goNode.toString()});
+})
 
+// Delete the Network
+router.delete("/deleteNetwork/:network", (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NETWORK_DIR = `net${NETWORK_NUMBER}`
+    const INT_NODE = 1
+    const NODE = `${NETWORK_DIR}nodo${INT_NODE}`
 
-    // //0x916353E14189A4bF8C57CEbE65aA357585f64c71
+    //stop node
+    const docker_remove_network = `docker rm -f ${NODE}`
+    const result = exec(docker_remove_network, (error, stdout, stderr) => {
+        console.log("borrando")
+        if (error) {
+            res.send({ error })
+            return
+        }
+    })
+    //execSync(docker_remove_network)
 
-    // const goNode = startNode()
+    //remove all network files
+    fs.rmSync(NETWORK_DIR, { recursive: true }, (err) => {
+        if (err) {
+            // File deletion failed
+            console.error(err.message);
+            console.log("Nothing to Delete");
+            return;
+        }
+        console.log("Deleted successfully");
 
-    // //res.status(200).send({bootnode: bootnode.toString()});
-    // //res.status(200).send({initnodeDB: initnodeDB.toString()});
-    // //res.status(200).send({addressnode: addressnode.toString()});
-    // res.status(200).send({goNode: goNode.toString()});
+    })
+
+    res.status(200).send({NetworkRemoved: "OK"});
+
+})
+
+// TEMP Create the node
+router.post("/createContainer/:network", (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NODE_NUMBER = 1
+
+    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+
+    const signer_address = "4dc571cabaf111fdc855f8506e57ad6c13b982eb"
+
+    const goNode = startNode(params, signer_address)
+    res.status(200).send({goNode: goNode.toString()});
 })
 
 
@@ -206,7 +285,3 @@ router.post("/createNetwork/:network", (req, res) => {
 router.get("/", (req, res) => {
     res.send("I'm the network")
 })
-
-
-
-
