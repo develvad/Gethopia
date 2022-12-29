@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const fs = require("node:fs");
 const { Docker } = require('node-docker-api');
+const cors = require('cors');
 
 //execute cmd Commands
 const { execSync, spawn, spawnSync } = require("child_process");
@@ -15,6 +16,8 @@ const FAUCET_ADDRESS = "A9c13244c9e66Ca2a061C500447C06b2698B7aE2"
 //const MICUENTA = "704765a908962e25626f2bea8cdf96c84dedaa0b"
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
+//cors
+router.use(cors())
 
 function createParams(network, node) {
     const INT_NETWORK = parseInt(network)
@@ -226,14 +229,13 @@ router.post("/createNetwork/:network", (req, res) => {
 
     //initialize nodeDB
     const initnodeDB = initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
-    console.log("Hello");
     delay(2000)
     //res.status(200).send({initnodeDB: initnodeDB.toString()});
 
     //signer_address = 'b6da28fee3e0cb52df1fe72a74b271b3bc385d38'
     //start container_node
     const goNode = startNode(params, signer_address)
-    //res.status(200).send({goNode: goNode.toString()});
+    res.status(200).send({goNode: goNode.toString()});
 })
 
 // Delete the Network

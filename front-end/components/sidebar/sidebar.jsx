@@ -13,28 +13,34 @@ const SideBar = () => {
                     </div>
                 </header>
                 <ul className="dash-nav-list">
-                    <li className="dash-nav-item mx-1">      
-                        <span style={{color:"#B7C46E"}} className="fa-solid fa-network-wired"></span>
-                        <span>           
-                            <Link style={{display:"inline-block", color:"#B7C46E"}} to="/redes">Redes</Link>
+                    <li className="dash-nav-item ">
+                        <span>
+                            <Link style={{ color:"#B7C46E"}} to="/redes">
+                                <span style={{color:"#B7C46E"}} className="fa-solid fa-network-wired"></span>
+                                <span className="mx-1">Redes</span>
+                            </Link>
                         </span>      
                     </li>
-                    <li className="dash-nav-item mx-1">
-                        <span style={{color:"#B7C46E"}} className="fa-solid fa-magnifying-glass"></span>
-                        <span>           
-                            <Link style={{display:"inline-block", color:"#B7C46E"}} to="/explorador">Explorador</Link>
+                    <li className="dash-nav-item ">
+                            <Link style={{ color:"#B7C46E"}} to="/explorador">
+                                <span style={{color:"#B7C46E"}} className="fa-solid fa-magnifying-glass"></span>
+                                <span className="mx-1">Explorador</span>
+                            </Link>
+                    </li>
+                    <li className="dash-nav-item">
+                        <span>
+                            <Link style={{ color:"#B7C46E"}} to="/personal">
+                                <span style={{color:"#B7C46E"}} className="fa-solid fa-user"></span>
+                                <span className="mx-1">Área Personal</span>
+                            </Link>
                         </span>      
                     </li>
-                    <li className="dash-nav-item mx-1">
-                        <span style={{color:"#B7C46E"}} className="fa-solid fa-user"></span>
-                        <span>           
-                            <Link style={{display:"inline-block", color:"#B7C46E"}} to="/personal">Área personal</Link>
-                        </span>      
-                    </li>
-                    <li className="dash-nav-item mx-1">
-                        <span style={{color:"#B7C46E"}} className="fa-solid fa-faucet"></span>
-                        <span>           
-                            <Link style={{display:"inline-block", color:"#B7C46E"}} to="/faucet">Faucet</Link>
+                    <li className="dash-nav-item ">
+                        <span>
+                            <Link style={{color:"#B7C46E"}} to="/faucet">
+                                <span style={{color:"#B7C46E"}} className="fa-solid fa-faucet"></span>
+                                <span className="mx-1">Faucet</span>
+                            </Link>
                         </span>      
                     </li>
                 </ul>
