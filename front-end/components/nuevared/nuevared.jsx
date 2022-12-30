@@ -17,14 +17,8 @@ const NuevaRed = () => {
         }
     }, [idRed])
 
-    const { isLoading, error, data, refetch } = useQuery(['newNet'] , async () => {
-        console.log('----> ', idRed);
-        /*
-                const response = await axios.post('http://localhost:3000/network/listAll', {});
-        */
-        const resFrom = await axios.post('http://localhost:3000/network/createNetwork/' + idRed);
-        console.log(resFrom);
-        return resFrom;
+        const { isLoading, error, data, refetch, isFetching } = useQuery(['newNet'] , async () => {
+        return await axios.post('http://localhost:3000/network/createNetwork/' + idRed);
     }, {enabled: false});
     const alPulsar = (datosBoton) => {
         console.log(datosBoton);
@@ -33,16 +27,16 @@ const NuevaRed = () => {
 
     return(
         <div>
-            { isLoading &&
+            { isFetching &&
                 <>
-                    <h3> Creando nueva red </h3>
+                    <h3 className='mx-2 my-2'> Creando nueva red </h3>
                     <img src="/public/loading.svg"/>
                 </>
                 }
             {
-                !isLoading &&
+                !isFetching &&
                 <>
-                    <h3 className='mx-2 my-2'>Nueva red</h3>
+                    <h3 className='mx-2 my-2'>Nueva red { isLoading} </h3>
                     <form onSubmit={handleSubmit(alPulsar)}>
                         <div className="form-group mx-2">
                             <label>Introduzca identificador de red</label>
@@ -51,7 +45,6 @@ const NuevaRed = () => {
                         <button type="submit" className="btn btn-primary mt-1 mx-2">Añadir red</button>
                     </form>
                 </>
-
             }
 
         </div>

@@ -3,19 +3,23 @@
     background-color: #fff;
     overflow: hidden;
 }
+
 .info__padding {
     padding:  40px 40px 30px 40px;
 }
+
 h3 {
     font-size: 19px;
     margin-bottom: 12px;
     font-weight: 600;
 }
+
 p {
     font-size: 16px;
     font-weight: 400;
 }
-h3, p {
+
+.card h3, p {
     color: #0B1A28;
     text-align: center;
 }

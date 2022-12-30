@@ -189,8 +189,6 @@ async function startNode(params, signer_address) {
     return result2
 }
 
-
-
 // Create the network
 router.post("/createNetwork/:network", (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
@@ -265,9 +263,7 @@ router.delete("/deleteNetwork/:network", (req, res) => {
             return;
         }
         console.log("Deleted successfully");
-
     })
-
     res.status(200).send({NetworkRemoved: "OK"});
 
 })

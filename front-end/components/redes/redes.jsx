@@ -18,18 +18,30 @@ const Redes = () => {
     } ,[]);
 
     const { isLoading, error, data, refetch } = useQuery(['newNet'] , async () => {
-        const resDelete = await axios.post('http://localhost:3000/network/createNetwork/' + idRed);
+        const resDelete = await axios.delete('http://localhost:3000/network/deleteNetwork/' + netSelected);
         return resDelete;
     }, {enabled: false});
 
     const deleteNet = (net) => {
         console.log(net);
-        console.log(net.name[4])
+        console.log(net.name[4]);
         setModalDisp(true);
+        setNetSelected(net.name[4]);
+
     }
 
     const closeModal = () => {
         setModalDisp(false);
+    }
+
+    const deleteModalConfirm = () => {
+        setTimeout(()=>  {
+            refetch();
+            setModalDisp(false);
+        }, 100)
+        setTimeout(() => {
+            getSites();
+        }, 1000);
     }
 
     return (
@@ -62,7 +74,7 @@ const Redes = () => {
                                     <input type="checkbox" value="option-1" />
                                 </td>
                                 <td><a href="#">{site.name.slice(1,5)}</a></td>
-                                <td>{site.id.slice(0,5)}... { site.id.slice(site.id.length -3, site.id.length )}</td>
+                                <td>{site.id.slice(0,9)}...{ site.id.slice(site.id.length -5, site.id.length )}</td>
                                 <td className="table-td-select">
                                     <select className="form-control" id="example-select-2">
                                         <option>Nodo1</option>
@@ -95,6 +107,11 @@ const Redes = () => {
             <div>
                 <Outlet/>
             </div>
+            { isLoading &&
+                <>
+                    <img src="/public/loading.svg"/>
+                </>
+            }
             <div className="card" style={{width: "500px", margin: "0 auto", display: modalDisp ? 'block' : 'none' }}>
                 <div className="info__padding" >
                     <h3>Borrar</h3>
@@ -104,9 +121,10 @@ const Redes = () => {
                 </div>
                 <div className="button__group">
                     <button onClick={closeModal}>Cancelar</button>
-                    <button>Borrar</button>
+                    <button onClick={deleteModalConfirm}>Borrar</button>
                 </div>
             </div>
+
         </main>
 
     )
