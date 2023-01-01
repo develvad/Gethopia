@@ -1,8 +1,8 @@
-POST http://localhost:3000/network/createNetwork/1
+POST http://localhost:3000/network/createNetwork/4
 Content-Type: application/json 
 
 ###
-POST http://localhost:3000/network/createContainer/1
+POST http://localhost:3000/network/createContainer/3
 Content-Type: application/json 
 
 ###

@@ -90,6 +90,8 @@ function createAddress(node_path, node_name) {
     const lista = fs.readdirSync(`${node_path}/keystore`)
     const address = JSON.parse(fs.readFileSync(`${node_path}/keystore/${lista[0]}`).toString()).address
 
+    //const signer_address = await getSignerForNode(node_path);
+
     return address
 }
 
@@ -275,7 +277,7 @@ router.post("/createContainer/:network", async (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
     const NODE_NUMBER = 1
     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-    const signer_address = await getSignerForNode(req.params.network);
+    const signer_address = await getSignerForNode(params);
     const goNode = await startNode(params, signer_address)
     res.status(200).send({goNode: goNode.toString()});
 })
