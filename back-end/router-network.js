@@ -1,14 +1,14 @@
 const express = require("express");
 const router = express.Router();
-const fs = require("node:fs");
+const fs = require("fs");
 const { Docker } = require('node-docker-api');
 const cors = require('cors');
 
 //execute cmd Commands
 const { execSync, spawn, spawnSync } = require("child_process");
-const util = require('node:util');
+const util = require('util');
 const exec = util.promisify(require('child_process').exec);
-const path = require("node:path")
+const path = require("path")
 module.exports = router
 
 const BALANCE = "0x200000000000000000000000000000000000000000000000000000000000000"
@@ -42,7 +42,7 @@ function createBootNode(network_name) {
 
     //run docker command to create boot-key, replace .bootnode and bootnode by network_name-bootnode 
     //create bootkey    
-    const docker_bootkey = "docker run --rm -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --genkey /opt/bootnode/boot.key"
+    const docker_bootkey = "docker run --rm -v %cd%/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --genkey /opt/bootnode/boot.key"
 
     //prob need async await function
     const bootkeyResult = execSync(docker_bootkey)
@@ -51,7 +51,7 @@ function createBootNode(network_name) {
 
     // run docker command to create boot-node, replace ethereum-bootnode, .bootnode and bootnode by network_name-bootnode 
     //create bootkey   
-    const docker_bootnode = "docker run -d -p 30301:30301 --name ethereum-bootnode -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=9 --addr 0.0.0.0:30301"
+    const docker_bootnode = "docker run -d -p 30301:30301 --name ethereum-bootnode -v %cd%/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=9 --addr 0.0.0.0:30301"
     const bootnodeResult = execSync(docker_bootnode)
 
     // run docker command to retrieve enode for ethereum-bootnode for network_name-bootnode 
@@ -72,7 +72,7 @@ function createNodeDirectory(network_path, node_path) {
 }
 
 function deleteNodeDirectory(network_path, node_path) {
-    fs.rmSync(network_path, { recursive: true }, (err) => {
+    fs.rmdirSync(network_path, { recursive: true }, (err) => {
         if (err) {
             // File deletion failed
             console.error(err.message);
@@ -87,7 +87,7 @@ function deleteNodeDirectory(network_path, node_path) {
 function createAddress(node_path, node_name) {
 
     // Init first node to with genesis state and initiallize DB
-    const docker_createAddress = `docker run --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
+    const docker_createAddress = `docker run --rm -v %cd%/${node_path}:/${node_name} -v %cd%/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
     execSync(docker_createAddress)
 
     const lista = fs.readdirSync(`${node_path}/keystore`)
@@ -124,7 +124,10 @@ function generateGenesis(chain_id, signer_address, alloc_addresses, network_path
 function initNodeDB(node_path, node_name, network_name) {
 
     // Init first node to with genesis state and initiallize DB
-    const docker_init_node_DB = `docker run -d --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/${network_name}/genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir ${node_name} /genesis.json`
+    // const docker_init_node_DB = `docker run -d --rm -v %cd%/${node_path}:/${node_name} -v %cd%/${network_name}/genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir ${node_name} /genesis.json`
+    // const docker_init_node_DB = `docker run -d --rm -v C:\\ruta\\completa\\a\\${node_path}:\\${node_name} -v C:\\ruta\\completa\\a\\${network_name}\\genesis.json:\\genesis.json --name initDB ethereum/client-go init --datadir ${node_name}
+
+    const docker_init_node_DB = `docker run -d --rm -v C:%cd%\\${node_path}:\\${node_name} -v C:%cd%\\${network_name}\\genesis.json:\\genesis.json --name initDB ethereum/client-go init --datadir ${node_name} \\genesis.json`
     //const initnode = execSync(docker_init_node_DB)
     //return docker_init_node_DB
 
@@ -151,13 +154,13 @@ async function startNode(params, signer_address) {
     console.log("START NODE");
 
     // Init first node to with genesis state and initiallize DB
-    //const docker_startNode = "docker run -d -p 8545:8545 -p 30303:30303 -v $(pwd)/nodo1:/nodo1 -v $(pwd)/pwd.txt:/pwd.txt --name eth2 ethereum/client-go --datadir nodo1 --nodiscover --networkid 19999 --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --http.corsdomain '*' --allow-insecure-unlock --unlock '0x3ee83c6f0b679ab87460365851d67e28f46c210d' --password /pwd.txt --graphql --mine --miner.etherbase '0x9E5CC5E873e31C45779b15974c6F57e365a94C99' --miner.threads=2 --bootnodes 'enode://48b4515deeb86d88aef15eb29cc86f94ed01de7a9f9b3002c2c1e094a404aff006d5b9d844206da5031c2e4dcd07473168f6cee1a3a37a70940a4c59d52d0adb@127.0.0.1:0?discport=30301'"
+    //const docker_startNode = "docker run -d -p 8545:8545 -p 30303:30303 -v %cd%/nodo1:/nodo1 -v %cd%/pwd.txt:/pwd.txt --name eth2 ethereum/client-go --datadir nodo1 --nodiscover --networkid 19999 --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --http.corsdomain '*' --allow-insecure-unlock --unlock '0x3ee83c6f0b679ab87460365851d67e28f46c210d' --password /pwd.txt --graphql --mine --miner.etherbase '0x9E5CC5E873e31C45779b15974c6F57e365a94C99' --miner.threads=2 --bootnodes 'enode://48b4515deeb86d88aef15eb29cc86f94ed01de7a9f9b3002c2c1e094a404aff006d5b9d844206da5031c2e4dcd07473168f6cee1a3a37a70940a4c59d52d0adb@127.0.0.1:0?discport=30301'"
     const docker_startNode =
         `docker run -d \
     -p ${params.HTTP_PORT}:${params.HTTP_PORT} \
     -p ${params.PORT}:${params.PORT} \
-    -v $(pwd)/${params.DIR_NODE}:/${params.NODE} \
-    -v $(pwd)/pwd.txt:/pwd.txt \
+    -v %cd%/${params.DIR_NODE}:/${params.NODE} \
+    -v %cd%/pwd.txt:/pwd.txt \
     --name ${params.NODE} ethereum/client-go \
     --datadir ${params.NODE} \
     --syncmode full \
@@ -255,7 +258,7 @@ router.delete("/deleteNetwork/:network", (req, res) => {
     //execSync(docker_remove_network)
 
     //remove all network files
-    fs.rmSync(NETWORK_DIR, { recursive: true }, (err) => {
+    fs.rmdirSync(NETWORK_DIR, { recursive: true }, (err) => {
         if (err) {
             // File deletion failed
             console.error(err.message);
