@@ -41,8 +41,9 @@ function createParams(network, node) {
 function createBootNode(network_name) {
 
     //run docker command to create boot-key, replace .bootnode and bootnode by network_name-bootnode 
-    //create bootkey    
-    const docker_bootkey = "docker run --rm -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --genkey /opt/bootnode/boot.key"
+    //create bootkey        
+    // const docker_bootkey = "docker run --rm -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --genkey /opt/bootnode/boot.key"
+    const docker_bootkey = "docker run --rm -v " + path.join(__dirname, '.bootnode:', 'opt', 'bootnode') + " ethereum/client-go:alltools-latest bootnode --genkey /opt/bootnode/boot.key"
 
     //prob need async await function
     const bootkeyResult = execSync(docker_bootkey)
@@ -51,7 +52,8 @@ function createBootNode(network_name) {
 
     // run docker command to create boot-node, replace ethereum-bootnode, .bootnode and bootnode by network_name-bootnode 
     //create bootkey   
-    const docker_bootnode = "docker run -d -p 30301:30301 --name ethereum-bootnode -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=9 --addr 0.0.0.0:30301"
+    // const docker_bootnode = "docker run -d -p 30301:30301 --name ethereum-bootnode -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=9 --addr 0.0.0.0:30301"
+    const docker_bootnode = "docker run -d -p 30301:30301 --name ethereum-bootnode -v " + path.join(__dirname, '.bootnode:', 'opt', 'bootnode') + " ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=9 --addr 0.0.0.0:30301"
     const bootnodeResult = execSync(docker_bootnode)
 
     // run docker command to retrieve enode for ethereum-bootnode for network_name-bootnode 
@@ -87,7 +89,8 @@ function deleteNodeDirectory(network_path, node_path) {
 function createAddress(node_path, node_name) {
 
     // Init first node to with genesis state and initiallize DB
-    const docker_createAddress = `docker run --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
+
+    const docker_createAddress = 'docker run --rm -v ' + path.join(__dirname, node_path) + `:/${node_name} -v ` +  path.join(__dirname, 'pwd.txt') + `/:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
     execSync(docker_createAddress)
 
     const lista = fs.readdirSync(`${node_path}/keystore`)
@@ -124,7 +127,7 @@ function generateGenesis(chain_id, signer_address, alloc_addresses, network_path
 function initNodeDB(node_path, node_name, network_name) {
 
     // Init first node to with genesis state and initiallize DB
-    const docker_init_node_DB = `docker run -d --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/${network_name}/genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir ${node_name} /genesis.json`
+    const docker_init_node_DB = 'docker run -d --rm -v ' + path.join(__dirname, node_path) + `:/${node_name} -v` +  path.join(__dirname, network_name, 'genesis.json') + `:/genesis.json --name initDB ethereum/client-go init --datadir ${node_name} /genesis.json`
     //const initnode = execSync(docker_init_node_DB)
     //return docker_init_node_DB
 
@@ -156,8 +159,8 @@ async function startNode(params, signer_address) {
         `docker run -d \
     -p ${params.HTTP_PORT}:${params.HTTP_PORT} \
     -p ${params.PORT}:${params.PORT} \
-    -v $(pwd)/${params.DIR_NODE}:/${params.NODE} \
-    -v $(pwd)/pwd.txt:/pwd.txt \
+    -v ` + path.join(__dirname, params.DIR_NODE) + `:/${params.NODE} \
+    -v ` + path.join(__dirname, 'pwd.txt') + `:/pwd.txt \
     --name ${params.NODE} ethereum/client-go \
     --datadir ${params.NODE} \
     --syncmode full \
@@ -168,12 +171,34 @@ async function startNode(params, signer_address) {
     --authrpc.port ${params.AUTHRPC_PORT}  \
     --http.corsdomain '*' \
     --allow-insecure-unlock \
-    --unlock '0x${signer_address}' \
+    --unlock 0x${signer_address} \
     --password /pwd.txt \
     --graphql \
     --mine \
     --miner.threads=2`
     //const startNode = execSync(docker_startNode)
+
+    // const docker_startNode =
+    //     `docker run -d \
+    // -p ${params.HTTP_PORT}:${params.HTTP_PORT} \
+    // -p ${params.PORT}:${params.PORT} \
+    // -v $(pwd)/${params.DIR_NODE}:/${params.NODE} \
+    // -v $(pwd)/pwd.txt:/pwd.txt \
+    // --name ${params.NODE} ethereum/client-go \
+    // --datadir ${params.NODE} \
+    // --syncmode full \
+    // --http.api personal,eth,net,web3 \
+    // --http \
+    // --http.addr 0.0.0.0 \
+    // -http.port ${params.HTTP_PORT} \
+    // --authrpc.port ${params.AUTHRPC_PORT}  \
+    // --http.corsdomain '*' \
+    // --allow-insecure-unlock \
+    // --unlock '0x${signer_address}' \
+    // --password /pwd.txt \
+    // --graphql \
+    // --mine \
+    // --miner.threads=2`
 
     async function lsExample2() {
         const { stdout, stderr } = await exec(docker_startNode);

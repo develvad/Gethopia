@@ -1,4 +1,4 @@
-POST http://localhost:3000/network/createNetwork/1
+POST http://localhost:3000/network/createNetwork/2
 Content-Type: application/json 
 
 ###
