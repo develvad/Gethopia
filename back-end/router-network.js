@@ -9,6 +9,7 @@ const { execSync, spawn, spawnSync } = require("child_process");
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 const path = require("path")
+const fullPath = path.join('C:/Users/usuario/Desktop/Curso-Blockchain/Proyecto-Scrum/Gethopia/back-end/net1/net1nodo1')
 module.exports = router
 
 const BALANCE = "0x200000000000000000000000000000000000000000000000000000000000000"
@@ -125,9 +126,12 @@ function initNodeDB(node_path, node_name, network_name) {
 
     // Init first node to with genesis state and initiallize DB
     // const docker_init_node_DB = `docker run -d --rm -v %cd%/${node_path}:/${node_name} -v %cd%/${network_name}/genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir ${node_name} /genesis.json`
-    // const docker_init_node_DB = `docker run -d --rm -v C:\\ruta\\completa\\a\\${node_path}:\\${node_name} -v C:\\ruta\\completa\\a\\${network_name}\\genesis.json:\\genesis.json --name initDB ethereum/client-go init --datadir ${node_name}
+    //const docker_init_node_DB = `docker run -d --rm -v C:\Users\usuario\Desktop\Curso-Blockchain\Proyecto-Scrum\Gethopia\back-end\\${node_path}:\\${node_name} -v C:\Users\usuario\Desktop\Curso-Blockchain\Proyecto-Scrum\Gethopia\back-end\\${network_name}\\genesis.json:\\genesis.json --name initDB ethereum/client-go init --datadir ${node_name}
+    //const docker_init_node_DB = `docker run -d --rm -v C:%cd%\\${node_path}:\\${node_name} -v C:%cd%\\${network_name}\\genesis.json:\\genesis.json --name initDB ethereum/client-go init --datadir ${node_name} \\genesis.json`
+    //const docker_init_node_DB = `docker run -d --rm -v C:\\Users\\usuario\\Desktop\\Curso-Blockchain\\Proyecto-Scrum\\Gethopia\\back-end\\net2\\net2nodo1:\\net2nodo1 -v C:\\Users\\usuario\\Desktop\\Curso-Blockchain\\Proyecto-Scrum\\Gethopia\\back-end\\net2\\genesis.json:\\genesis.json --name initDB ethereum/client-go init --datadir net2nodo1 \\genesis.json`
+    const docker_init_node_DB = "docker run -d --rm -v C:\\Users\\usuario\\Desktop\\Curso-Blockchain\\Proyecto-Scrum\\Gethopia\\back-end\\net1\\net1nodo1:/net1nodo1 -v C:\\Users\\usuario\\Desktop\\Curso-Blockchain\\Proyecto-Scrum\\Gethopia\\back-end\\net1\\genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir net1nodo1 /genesis.json"
+//    const docker_init_node_DB = `docker run -d --rm -v ${path.join(__dirname, node_path)}:/${node_name} -v ${path.join(__dirname, network_name, 'genesis.json')}:/genesis.json --name initDB ethereum/client-go init --datadir ${node_name} /genesis.json`;
 
-    const docker_init_node_DB = `docker run -d --rm -v C:%cd%\\${node_path}:\\${node_name} -v C:%cd%\\${network_name}\\genesis.json:\\genesis.json --name initDB ethereum/client-go init --datadir ${node_name} \\genesis.json`
     //const initnode = execSync(docker_init_node_DB)
     //return docker_init_node_DB
 
@@ -235,8 +239,8 @@ router.post("/createNetwork/:network", (req, res) => {
 
     //signer_address = 'b6da28fee3e0cb52df1fe72a74b271b3bc385d38'
     //start container_node
-    const goNode = startNode(params, signer_address)
-    res.status(200).send({goNode: goNode.toString()});
+    // const goNode = startNode(params, signer_address)
+    // res.status(200).send({goNode: goNode.toString()});
 })
 
 // Delete the Network
