@@ -45,10 +45,10 @@ const SideBar = () => {
                     </li>
                 </ul>
                 <footer className="dash-nav-tools d-flex justify-content-between">
-                    <a href="#"><span style={{color:"#B7C46E"}} className="icon fa fa-question-circle"></span></a>
-                    <a href="#"><span style={{color:"#B7C46E"}} className="icon fa fa-user-secret"></span></a>
-                    <a href="#"><span style={{color:"#B7C46E"}} className="icon fa fa-file-contract"></span></a>
-                    <a href="#"><span style={{color:"#B7C46E"}} className="icon fa fa-solid fa-hashtag"></span></a>
+                    <a href="#" title="Quienes somos"><span style={{color:"#B7C46E"}} className="icon fa fa-question-circle"></span></a>
+                    <a href="#" title="Privacidad"><span style={{color:"#B7C46E"}} className="icon fa fa-user-secret"></span></a>
+                    <a href="#" title="Terminos y condiciones"><span style={{color:"#B7C46E"}} className="icon fa fa-file-contract"></span></a>
+                    <a href="#" title="Redes Sociales"><span style={{color:"#B7C46E"}} className="icon fa fa-solid fa-hashtag"></span></a>
                 </footer>
             </nav>
 
