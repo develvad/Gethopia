@@ -120,24 +120,6 @@ const createAddress2 = async (node_path, node_name) => {
         Image: 'ethereum/client-go:alltools-v1.10.26',
         name: 'account_creator',
         Cmd: ['geth', '--datadir', node_name, 'account', 'new', '--password', 'pwd.txt'],
-        Mounts: [
-            {
-                Type: "bind",
-                Source: path.join(__dirname) + "/" + node_path,
-                Destination: "/" + node_name,
-                Mode: "",
-                RW: true,
-                Propagation: "rprivate"
-            },
-            {
-                Type: "bind",
-                Source: path.join(__dirname) + "/pwd.txt",
-                Destination: "/pwd.txt",
-                Mode: "",
-                RW: true,
-                Propagation: "rprivate"
-            }
-        ],
         HostConfig: {
             Binds: [
                 path.join(__dirname) + '/' + node_path + ":/" + node_name,
