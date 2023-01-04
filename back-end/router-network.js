@@ -8,7 +8,9 @@ const cors = require('cors');
 const { execSync, spawn, spawnSync } = require("child_process");
 const util = require('node:util');
 const exec = util.promisify(require('child_process').exec);
-const path = require("node:path")
+const path = require("node:path");
+const { log } = require("node:console");
+const { createNoSubstitutionTemplateLiteral } = require("typescript");
 module.exports = router
 
 const BALANCE = "0x200000000000000000000000000000000000000000000000000000000000000"
@@ -21,7 +23,7 @@ router.use(cors())
 
 function createParams(network, node) {
     const INT_NETWORK = parseInt(network)
-    const INT_NODE = parseInt(node)    
+    const INT_NODE = parseInt(node)
     const NETWORK_DIR = `net${INT_NETWORK}`
     const NODE = `${NETWORK_DIR}nodo${INT_NODE}`
     const NETWORK_CHAINID = 161615 + INT_NETWORK
@@ -84,7 +86,8 @@ function deleteNodeDirectory(network_path, node_path) {
     })
 }
 
-function createAddress(node_path, node_name) {
+//async function createAddress(node_path, node_name) {
+const createAddress = async (node_path, node_name) => {
 
     // Init first node to with genesis state and initiallize DB
     const docker_createAddress = `docker run --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
@@ -94,6 +97,82 @@ function createAddress(node_path, node_name) {
     const address = JSON.parse(fs.readFileSync(`${node_path}/keystore/${lista[0]}`).toString()).address
 
     return address
+
+}
+
+//async function createAddress(node_path, node_name) {
+const createAddress2 = async (node_path, node_name) => {
+
+    // Init first node to with genesis state and initiallize DB
+    // const docker_createAddress = `docker run --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
+    // execSync(docker_createAddress)
+
+    // const staticNodeName = 'nodo_' + req.params.name;
+    // const dataToReturn = {};
+
+    // const promisifyStream = (stream) => new Promise((resolve, reject) => {
+    //     stream.on('data', (d) => console.log(d.toString()))
+    //     stream.on('end', resolve)
+    //     stream.on('error', reject)
+    //   })
+
+    docker.container.create({
+        Image: 'ethereum/client-go:alltools-v1.10.26',
+        name: 'account_creator',
+        Cmd: ['geth', '--datadir', node_name, 'account', 'new', '--password', 'pwd.txt'],
+        Mounts: [
+            {
+                Type: "bind",
+                Source: path.join(__dirname) + "/" + node_path,
+                Destination: "/" + node_name,
+                Mode: "",
+                RW: true,
+                Propagation: "rprivate"
+            },
+            {
+                Type: "bind",
+                Source: path.join(__dirname) + "/pwd.txt",
+                Destination: "/pwd.txt",
+                Mode: "",
+                RW: true,
+                Propagation: "rprivate"
+            }
+        ],
+        HostConfig: {
+            Binds: [
+                path.join(__dirname) + '/' + node_path + ":/" + node_name,
+                path.join(__dirname) + '/pwd.txt:/pwd.txt',
+            ]
+        }
+    }).then(async (container) => {
+            await container.start();
+            const containerData = {
+                id: container.Id,
+                name: node_name
+            }
+            console.log('Account Created: ', containerData);
+            return "OK"
+        })
+    // .then(container => container.start())
+    // .then
+    // .then((container) => {
+    //     _container = container
+    //     return container.exec.create({
+    //       AttachStdout: true,
+    //       AttachStderr: true,
+    //       Cmd: [ 'echo', 'test' ]
+    //     })
+    //   })
+    // .then((exec) => {
+    //  return exec.start({ Detach: false })
+    // })
+    // .then((stream) => promisifyStream(stream))
+    // .then(() => _container.kill())
+    // .catch((error) => console.log(error))
+
+    // const lista = fs.readdirSync(`${node_path}/keystore`)
+    // const address = JSON.parse(fs.readFileSync(`${node_path}/keystore/${lista[0]}`).toString()).address
+
 }
 
 
@@ -140,6 +219,41 @@ function initNodeDB(node_path, node_name, network_name) {
     return result
 
 }
+
+
+async function initNodeDB2(node_path, node_name, network_name) {
+    //    const staticName = 'Genesis_' + req.params.name;
+    //const staticNodeName = 'nodo_' + req.params.name;
+    docker.container.create({
+        Image: 'ethereum/client-go:alltools-v1.10.26',
+        name: 'initDB',
+        Cmd: ['geth', 'init', '--datadir', node_name, '/genesis.json'],
+        // Mounts: [
+        //     {
+        //         Type: "bind",
+        //         Source: path.join(__dirname) + "/" + node_path,
+        //         Destination: "/" + node_name,
+        //         Mode: "",
+        //         RW: true,
+        //         Propagation: "rprivate"
+        //     },
+        //     {
+        //         Type: "bind",
+        //         Source: path.join(__dirname) + "/" + network_name + "/genesis.json",
+        //         Destination: "/genesis.json",
+        //         Mode: "",
+        //         RW: true,
+        //         Propagation: "rprivate"
+        //     }],
+        HostConfig: {
+            Binds: [
+                path.join(__dirname) + "/" + node_path + ":/" + node_name,
+                path.join(__dirname) + "/" + network_name + "/genesis.json:/genesis.json"
+            ],
+        },
+    }).then((container) => container.start());
+};
+
 
 function delay(time) {
     return new Promise(resolve => setTimeout(resolve, time));
@@ -189,6 +303,141 @@ async function startNode(params, signer_address) {
     return result2
 }
 
+//async function startNode2(NODE, DIR_NODE, AUTHRPC_PORT, HTTP_PORT, PORT, signer_address) {
+async function startNode2(params,signer_address) {
+    await delay(5000);
+    console.log("START NODE");
+
+    const { NODE, DIR_NODE, AUTHRPC_PORT, HTTP_PORT, PORT } = params
+
+    docker.container.create({
+        Image: 'ethereum/client-go:alltools-v1.10.26',
+        name: NODE, //NODE
+        Cmd: [
+            'geth',
+            '--datadir',
+            NODE, //NODE
+            '--syncmode',
+            'full',
+            '--http',
+            '--http.addr',
+            '0.0.0.0',
+            '--http.api',
+            'admin,eth,miner,net,txpool,personal',
+            '--http.port',
+            HTTP_PORT.toString(), // TODO: HTTP_PORT
+            '--http.corsdomain',
+            "'*'",
+            '--allow-insecure-unlock',
+            '-unlock',
+            `0x${signer_address}`, ///////////// TODO: Signer Address
+            '--password',
+            'pwd.txt',
+            '--port',
+            PORT.toString(), // TODO: PORT
+            '--authrpc.port',
+            AUTHRPC_PORT.toString(), // TODO: AUTHRPC_PORT
+            '--mine',
+            '--miner.threads=2',
+            '--graphql'
+        ],
+        // Ports: [
+        //     {
+        //         PrivatePort: PORT,
+        //         PublicPort: PORT,
+        //         Type: "tcp"
+        //     },
+        //     {
+        //         PrivatePort: PORT,
+        //         PublicPort: PORT,
+        //         Type: "udp"
+        //     },
+        //     {
+        //         PrivatePort: HTTP_PORT,
+        //         PublicPort: HTTP_PORT,
+        //         Type: "tcp"
+        //     }
+        //     // {
+        //     //     PrivatePort: 8546,
+        //     //     PublicPort: 8546,
+        //     //     Type: "tcp"
+        //     // }
+        // ],
+        // Mounts: [
+        //     {
+        //         Type: "bind",
+        //         Source: path.join(__dirname) + "/" + DIR_NODE,
+        //         Destination: "/" + NODE,
+        //         Mode: "",
+        //         RW: true,
+        //         Propagation: "rprivate"
+        //     },
+        //     {
+        //         Type: "bind",
+        //         Source: path.join(__dirname) + "/pwd.txt",
+        //         Destination: "/pwd.txt",
+        //         Mode: "",
+        //         RW: true,
+        //         Propagation: "rprivate"
+        //     }
+            // {
+            //     Type: "bind",
+            //     Source: path.join(__dirname) + "/genesis.json",
+            //     Destination: "/genesis.json",
+            //     Mode: "",
+            //     RW: true,
+            //     Propagation: "rprivate"
+            // },
+        // ],
+        ExposedPorts: {
+                "30303/tcp": {},
+                "30303/udp": {},
+                "30315/tcp": {},
+                "8557/tcp": {},
+                "8546/tcp": {}
+        }, 
+        HostConfig: {
+            Binds: [
+                path.join(__dirname) + '/' + DIR_NODE + ':/' + NODE,
+                path.join(__dirname) + '/pwd.txt:/pwd.txt',
+                // path.join(__dirname) + "/genesis.json:/genesis.json"
+
+
+            ],  
+            PortBindings: {
+                '30315/tcp': [
+                    {
+                        HostIp: '0.0.0.0',
+                        HostPort: PORT.toString()
+                    },
+                ],
+                // '30315/udp': [
+                //     {
+                //         HostIp: '0.0.0.0',
+                //         HostPort: PORT.toString()
+                //     }
+                // ],
+                '8557/tcp': [
+                    {
+                        HostIp: '0.0.0.0',
+                        HostPort: HTTP_PORT.toString()
+                    }
+                ]
+                // '8546/tcp': [
+                //     {
+                //         HostIp: '0.0.0.0',
+                //         HostPort: '8546'
+                //     }
+                // ],
+            },
+            NetworkMode: "br0"
+            // NetworkMode: "gethopia"
+        }
+    }).then((container) => container.start());
+
+    return
+}
+
 // Create the network
 router.post("/createNetwork/:network", (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
@@ -230,6 +479,10 @@ router.post("/createNetwork/:network", (req, res) => {
     delay(2000)
     //res.status(200).send({initnodeDB: initnodeDB.toString()});
 
+    //update/create static-nodes.json
+    // const sn_type = 'create'
+    // const staticNodes = staticNodes(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
+
     //signer_address = 'b6da28fee3e0cb52df1fe72a74b271b3bc385d38'
     //start container_node
     const goNode = startNode(params, signer_address)
@@ -264,8 +517,51 @@ router.delete("/deleteNetwork/:network", (req, res) => {
         }
         console.log("Deleted successfully");
     })
-    res.status(200).send({NetworkRemoved: "OK"});
+    res.status(200).send({ NetworkRemoved: "OK" });
 
+})
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// TEMP Create an address
+router.post("/createAddress/:network", async (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NODE_NUMBER = 1
+
+    //Initialize parameters 
+    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+
+    //Initialize directory
+    if (fs.existsSync(params.NETWORK_DIR)) {
+        console.log("Directory Exists");
+        deleteNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
+    }
+    createNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
+
+    //createAddress
+    const signer_address = createAddress2(params.DIR_NODE, params.NODE)
+    //res.status(200).send({ signer_address: signer_address });
+
+})
+
+// TEMP Create the node
+router.post("/createDB/:network", async (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NODE_NUMBER = 1
+    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+    const signer_address = await getSignerForNode(req.params.network);
+    //create Allocated Addresses
+    const alloc_addresses = [
+        signer_address,
+        FAUCET_ADDRESS
+    ]
+
+    //create genesis state from genesis_template
+    const genesis_file = generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
+    //res.status(200).send({ genesis_file: genesis_file});
+    const goNode = await initNodeDB2(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
+    res.status(200).send({ goNode: goNode });
 })
 
 // TEMP Create the node
@@ -274,9 +570,14 @@ router.post("/createContainer/:network", async (req, res) => {
     const NODE_NUMBER = 1
     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
     const signer_address = await getSignerForNode(req.params.network);
-    const goNode = await startNode(params, signer_address)
-    res.status(200).send({goNode: goNode.toString()});
+    //const goNode = await startNode2(params.NODE, params.DIR_NODE, params.AUTHRPC_PORT, params.HTTP_PORT, params.PORT, signer_address)
+    const goNode = await startNode2(params, signer_address)
+    res.status(200).send({ goNode: goNode });
 })
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 // I'm the network
 router.get("/", (req, res) => {
@@ -285,16 +586,16 @@ router.get("/", (req, res) => {
 
 // Primero automatizamos el proceso de coger el signer address
 const getSignerForNode = async (id) => {
-    return new Promise((resolve, reject) =>  {
-        fs.readdir(path.join(__dirname) + '/net' + id +  '/net'+ id + 'nodo1' + '/keystore',
+    return new Promise((resolve, reject) => {
+        fs.readdir(path.join(__dirname) + '/net' + id + '/net' + id + 'nodo1' + '/keystore',
             (err, files) => {
                 if (err) {
-                    console.log ('ERR GET_SIGNER_FOR_NODE: ', err);
+                    console.log('ERR GET_SIGNER_FOR_NODE: ', err);
                     reject(err);
                 }
-                const data = fs.readFileSync(path.join(__dirname) + '/net' + id +  '/net'+ id + 'nodo1' + '/keystore/'  + files[0], 'utf8');
+                const data = fs.readFileSync(path.join(__dirname) + '/net' + id + '/net' + id + 'nodo1' + '/keystore/' + files[0], 'utf8');
                 const { address } = JSON.parse(data);
-                resolve (address)
+                resolve(address)
             });
     });
 }
@@ -303,12 +604,12 @@ const getSignerForNode = async (id) => {
 router.get('/listAll', (req, res) => {
     docker.container.list()
         .then((containers) => {
-            const mapeado = containers.map((e)=> {
+            const mapeado = containers.map((e) => {
                 return {
                     id: e.data.Id,
                     name: e.data.Names[0]
                 }
             });
             res.send(mapeado);
-        }).catch((e) => res.status(500).send({res: e.message}))
+        }).catch((e) => res.status(500).send({ res: e.message }))
 });
