@@ -151,8 +151,7 @@ const createAddress2 = async (node_path, node_name) => {
                 name: node_name
             }
             console.log('Account Created: ', containerData);
-            return "OK"
-        })
+        })//.then((container) => container.stop()).then((container) => container.delete({ force: true }))
     // .then(container => container.start())
     // .then
     // .then((container) => {
@@ -221,30 +220,13 @@ function initNodeDB(node_path, node_name, network_name) {
 }
 
 
-async function initNodeDB2(node_path, node_name, network_name) {
+const initNodeDB2 = async (node_path, node_name, network_name) => {
     //    const staticName = 'Genesis_' + req.params.name;
     //const staticNodeName = 'nodo_' + req.params.name;
     docker.container.create({
         Image: 'ethereum/client-go:alltools-v1.10.26',
         name: 'initDB',
         Cmd: ['geth', 'init', '--datadir', node_name, '/genesis.json'],
-        // Mounts: [
-        //     {
-        //         Type: "bind",
-        //         Source: path.join(__dirname) + "/" + node_path,
-        //         Destination: "/" + node_name,
-        //         Mode: "",
-        //         RW: true,
-        //         Propagation: "rprivate"
-        //     },
-        //     {
-        //         Type: "bind",
-        //         Source: path.join(__dirname) + "/" + network_name + "/genesis.json",
-        //         Destination: "/genesis.json",
-        //         Mode: "",
-        //         RW: true,
-        //         Propagation: "rprivate"
-        //     }],
         HostConfig: {
             Binds: [
                 path.join(__dirname) + "/" + node_path + ":/" + node_name,
@@ -392,8 +374,8 @@ async function startNode2(params,signer_address) {
         ExposedPorts: {
                 "30303/tcp": {},
                 "30303/udp": {},
-                "30315/tcp": {},
-                "8557/tcp": {},
+                "30315/tcp": {}, // TO DO CAMBIAR A VARIABLE
+                "8557/tcp": {}, // TO DO CAMBIAR A VARIABLE
                 "8546/tcp": {}
         }, 
         HostConfig: {
@@ -405,7 +387,7 @@ async function startNode2(params,signer_address) {
 
             ],  
             PortBindings: {
-                '30315/tcp': [
+                [PORT.toString() + '/tcp']: [ //PORT
                     {
                         HostIp: '0.0.0.0',
                         HostPort: PORT.toString()
@@ -417,7 +399,7 @@ async function startNode2(params,signer_address) {
                 //         HostPort: PORT.toString()
                 //     }
                 // ],
-                '8557/tcp': [
+                [HTTP_PORT.toString() + '/tcp']: [ //HTTP_PORT
                     {
                         HostIp: '0.0.0.0',
                         HostPort: HTTP_PORT.toString()
@@ -564,7 +546,7 @@ router.post("/createDB/:network", async (req, res) => {
     res.status(200).send({ goNode: goNode });
 })
 
-// TEMP Create the node
+// TEMP Start the node(container)
 router.post("/createContainer/:network", async (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
     const NODE_NUMBER = 1

@@ -10,11 +10,11 @@ DELETE http://localhost:3000/snetwork/deleteNetwork/1
 Content-Type: application/json 
 
 ###
-POST http://localhost:3000/network/createAddress/11
+POST http://localhost:3000/network/createAddress/14
 Content-Type: application/json 
 
 ###
-POST http://localhost:3000/network/createDB/11
+POST http://localhost:3000/network/createDB/12
 Content-Type: application/json 
 
 ###
