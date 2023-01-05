@@ -3,6 +3,7 @@ const router = express.Router();
 const fs = require("node:fs");
 const { Docker } = require('node-docker-api');
 const cors = require('cors');
+// var Docker = require('dockerode');
 
 //execute cmd Commands
 const { execSync, spawn, spawnSync } = require("child_process");
@@ -14,7 +15,13 @@ module.exports = router
 const BALANCE = "0x200000000000000000000000000000000000000000000000000000000000000"
 const FAUCET_ADDRESS = "A9c13244c9e66Ca2a061C500447C06b2698B7aE2"
 //const MICUENTA = "704765a908962e25626f2bea8cdf96c84dedaa0b"
-const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+ const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+// const docker = new Docker({
+//     protocol: 'http',
+//     host: 'http://127.0.0.1:23750/',
+//   });
+// var docker = new Docker({protocol:'http', host: '127.0.0.1', port: 23750});
+  
 
 //cors
 router.use(cors())
@@ -325,6 +332,18 @@ const getSignerForNode = async (id) => {
 }
 
 //  Listamos las redes activas.
+// router.get('/listAll', (req, res) => {
+//     docker.container.list()
+//         .then((containers) => {
+//             const mapeado = containers.map((e)=> {
+//                 return {
+//                     id: e.data.Id,
+//                     name: e.data.Names[0]
+//                 }
+//             });
+//             res.send(mapeado);
+//         }).catch((e) => res.status(500).send({res: e.message}))
+// });
 router.get('/listAll', (req, res) => {
     docker.container.list()
         .then((containers) => {
@@ -334,6 +353,12 @@ router.get('/listAll', (req, res) => {
                     name: e.data.Names[0]
                 }
             });
+            console.log(mapeado); // imprime la lista mapeada en la consola
+            console.log(req.headers); // imprime las cabeceras de la solicitud en la consola
+            console.log(req.body); // imprime el cuerpo de la solicitud en la consola
             res.send(mapeado);
-        }).catch((e) => res.status(500).send({res: e.message}))
+        }).catch((e) => {
+            console.log(e); // imprime el error en la consola
+            res.status(500).send({res: e.message});
+        })
 });
