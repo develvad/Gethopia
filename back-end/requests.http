@@ -9,7 +9,7 @@ Content-Type: application/json
 DELETE http://localhost:3000/network/deleteNetwork/1
 Content-Type: application/json 
 
-
+###
 POST http://localhost:3000/network/createAddress/11
 Content-Type: application/json 
 
@@ -19,4 +19,8 @@ Content-Type: application/json
 
 ###
 POST http://localhost:3000/network/createNodeContainer/11
+Content-Type: application/json 
+
+###
+GET http://localhost:3000/network/staticNode/5
 Content-Type: application/json 
