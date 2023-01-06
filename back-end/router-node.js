@@ -9,9 +9,6 @@ const { execSync, spawn, spawnSync } = require("child_process");
 const util = require('node:util');
 const exec = util.promisify(require('child_process').exec);
 const path = require("node:path");
-const { log } = require("node:console");
-const { transpileModule } = require("typescript");
-const { ServerResponse } = require("node:http");
 module.exports = router
 
 const BALANCE = "0x200000000000000000000000000000000000000000000000000000000000000"
@@ -343,51 +340,7 @@ router.post("/createNodeDB/:network", async (req, res) => {
     res.status(200).send({ initNode: initNode.toString() });
 })
 
-router.get("/staticNode/:network", async (req, res) => {
-    const NETWORK_NUMBER = parseInt(req.params.network)
-    const NETWORK_DIR = `net${NETWORK_NUMBER}`
-    // const NODE_NUMBER = 1
-    // const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-    // console.log("params: ", params);
-    const response = staticNodes(NETWORK_DIR)
-    res.status(200).send({ Reply: response })
 
-})
-
-
-const staticNodes = (network_name) => {
-
-    const nodos = fs.readdirSync(network_name, { withFileTypes: true })
-        .filter(i => !i.isFile())
-    console.log(nodos[1].name);
-
-    //if more than 9 nodes will need to revisit
-    const props = nodos.map(i => {
-        return ({
-            network: network_name,
-            name: i.name,
-            port: (30303 + parseInt(i.name.slice(-1)) + parseInt(network_name.slice(-1))).toString(),
-            nodekey: fs.readFileSync(`${network_name}/${i.name}/geth/nodekey`).toString()
-        })
-    })
-    //console.log(props);
-
-    //Create static-nodes.json
-    const staticNodes = props.map(i => `enode://${i.nodekey}@${i.name}:${i.port}`)
-    console.log(staticNodes);
- 
-    //Check if static-nodes.json file exists and delete for each node + create new static-nodes.json
-    props.forEach(i => {
-        if (fs.existsSync(path.join(__dirname, i.network) + "/" + i.name+ "/static-nodes.json")) {
-            console.log("static-nodes.json exists");
-            fs.unlinkSync(path.join(__dirname, i.network) + "/" + i.name + "/static-nodes.json")
-            console.log(i.name, " static-nodes.json deleted");
-        }
-        fs.writeFileSync(path.join(__dirname, i.network) + "/" + i.name + "/static-nodes.json", JSON.stringify(staticNodes))    
-    })
-
-    return props
-}
 
 
 // TEMP Create the node
@@ -449,3 +402,51 @@ router.get('/listAll', (req, res) => {
             res.send(mapeado);
         }).catch((e) => res.status(500).send({ res: e.message }))
 });
+
+router.get("/staticNode/:network", async (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NETWORK_DIR = `net${NETWORK_NUMBER}`
+    // const NODE_NUMBER = 1
+    // const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+    // console.log("params: ", params);
+    const response = staticNodes(NETWORK_DIR)
+    res.status(200).send({ Reply: response })
+
+})
+
+
+
+
+const staticNodes = (network_name) => {
+
+    const nodos = fs.readdirSync(network_name, { withFileTypes: true })
+        .filter(i => !i.isFile())
+    console.log(nodos[1].name);
+
+    //if more than 9 nodes will need to revisit
+    const props = nodos.map(i => {
+        return ({
+            network: network_name,
+            name: i.name,
+            port: (30303 + parseInt(i.name.slice(-1)) + parseInt(network_name.slice(-1))).toString(),
+            nodekey: fs.readFileSync(`${network_name}/${i.name}/geth/nodekey`).toString()
+        })
+    })
+    //console.log(props);
+
+    //Create static-nodes.json
+    const staticNodes = props.map(i => `enode://${i.nodekey}@${i.name}:${i.port}`)
+    console.log(staticNodes);
+ 
+    //Check if static-nodes.json file exists and delete for each node + create new static-nodes.json
+    props.forEach(i => {
+        if (fs.existsSync(path.join(__dirname, i.network) + "/" + i.name+ "/static-nodes.json")) {
+            console.log("static-nodes.json exists");
+            fs.unlinkSync(path.join(__dirname, i.network) + "/" + i.name + "/static-nodes.json")
+            console.log(i.name, " static-nodes.json deleted");
+        }
+        fs.writeFileSync(path.join(__dirname, i.network) + "/" + i.name + "/static-nodes.json", JSON.stringify(staticNodes))    
+    })
+
+    return props
+}
