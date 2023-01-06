@@ -331,7 +331,7 @@ router.post("/createNodeDB/:network", async (req, res) => {
     ]
 
     //create genesis state from genesis_template
-    const genesis_file = generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
+    //const genesis_file = generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
     //res.status(200).send({ genesis_file: genesis_file});
     const initNode = await initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
 
