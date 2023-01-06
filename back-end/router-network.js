@@ -100,7 +100,7 @@ function createAddress(node_path, node_name) {
 
 
 
-function generateGenesis(chain_id, signer_address, alloc_addresses, network_path) {
+async function generateGenesis(chain_id, signer_address, alloc_addresses, network_path) {
     //const timestamp = Math.round(((new Date()).getTime() / 1000)).toString(16)
     // leemos la plantilla del genesis
     let genesis = JSON.parse(fs.readFileSync('genesis_template.json').toString())
@@ -331,7 +331,7 @@ router.post("/createNodeDB/:network", async (req, res) => {
     ]
 
     //create genesis state from genesis_template
-    const genesis_file = generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
+    const genesis_file = await generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
     //res.status(200).send({ genesis_file: genesis_file});
     const initNode = await initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
 
