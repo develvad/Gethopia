@@ -42,16 +42,17 @@ function createBootNode(network_name) {
 
     //run docker command to create boot-key, replace .bootnode and bootnode by network_name-bootnode 
     //create bootkey    
-    const docker_bootkey = "docker run --rm -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --genkey /opt/bootnode/boot.key"
-
-    //prob need async await function
+    //const docker_bootkey = "docker run --rm -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --genkey /opt/bootnode/boot.key"
+    const docker_bootkey = "docker run --rm -v " + path.join(__dirname, '.bootnode:', 'opt', 'bootnode') + " ethereum/client-go:alltools-latest bootnode --genkey /opt/bootnode/boot.key"
     const bootkeyResult = execSync(docker_bootkey)
+
     //const bootkeyResult = bootkeyResult.toString()
     //console.log(bootkeyResult);   
 
     // run docker command to create boot-node, replace ethereum-bootnode, .bootnode and bootnode by network_name-bootnode 
     //create bootkey   
-    const docker_bootnode = "docker run -d -p 30301:30301 --name ethereum-bootnode -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=9 --addr 0.0.0.0:30301"
+    // const docker_bootnode = "docker run -d -p 30301:30301 --name ethereum-bootnode -v $(pwd)/.bootnode:/opt/bootnode ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=9 --addr 0.0.0.0:30301"
+    const docker_bootnode = "docker run -d -p 30301:30301 --name ethereum-bootnode -v " + path.join(__dirname, '.bootnode:', 'opt', 'bootnode') + " ethereum/client-go:alltools-latest bootnode --nodekey /opt/bootnode/boot.key --verbosity=9 --addr 0.0.0.0:30301"
     const bootnodeResult = execSync(docker_bootnode)
 
     // run docker command to retrieve enode for ethereum-bootnode for network_name-bootnode 
@@ -87,13 +88,14 @@ function deleteNodeDirectory(network_path, node_path) {
 function createAddress(node_path, node_name) {
 
     // Init first node to with genesis state and initiallize DB
-    const docker_createAddress = `docker run --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
+    //const docker_createAddress = `docker run --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
+    const docker_createAddress = 'docker run --rm -v ' + path.join(__dirname, node_path) + `:/${node_name} -v ` +  path.join(__dirname, 'pwd.txt') + `/:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
     execSync(docker_createAddress)
 
-    const lista = fs.readdirSync(`${node_path}/keystore`)
-    const address = JSON.parse(fs.readFileSync(`${node_path}/keystore/${lista[0]}`).toString()).address
+    //const lista = fs.readdirSync(`${node_path}/keystore`)
+    //const address = JSON.parse(fs.readFileSync(`${node_path}/keystore/${lista[0]}`).toString()).address
 
-    return address
+    return //address
 }
 
 
@@ -124,7 +126,8 @@ function generateGenesis(chain_id, signer_address, alloc_addresses, network_path
 function initNodeDB(node_path, node_name, network_name) {
 
     // Init first node to with genesis state and initiallize DB
-    const docker_init_node_DB = `docker run -d --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/${network_name}/genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir ${node_name} /genesis.json`
+    //const docker_init_node_DB = `docker run -d --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/${network_name}/genesis.json:/genesis.json --name initDB ethereum/client-go init --datadir ${node_name} /genesis.json`
+    const docker_init_node_DB = 'docker run -d --rm -v ' + path.join(__dirname, node_path) + `:/${node_name} -v` +  path.join(__dirname, network_name, 'genesis.json') + `:/genesis.json --name initDB ethereum/client-go init --datadir ${node_name} /genesis.json`
     //const initnode = execSync(docker_init_node_DB)
     //return docker_init_node_DB
 
@@ -152,12 +155,33 @@ async function startNode(params, signer_address) {
 
     // Init first node to with genesis state and initiallize DB
     //const docker_startNode = "docker run -d -p 8545:8545 -p 30303:30303 -v $(pwd)/nodo1:/nodo1 -v $(pwd)/pwd.txt:/pwd.txt --name eth2 ethereum/client-go --datadir nodo1 --nodiscover --networkid 19999 --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --http.corsdomain '*' --allow-insecure-unlock --unlock '0x3ee83c6f0b679ab87460365851d67e28f46c210d' --password /pwd.txt --graphql --mine --miner.etherbase '0x9E5CC5E873e31C45779b15974c6F57e365a94C99' --miner.threads=2 --bootnodes 'enode://48b4515deeb86d88aef15eb29cc86f94ed01de7a9f9b3002c2c1e094a404aff006d5b9d844206da5031c2e4dcd07473168f6cee1a3a37a70940a4c59d52d0adb@127.0.0.1:0?discport=30301'"
+    // const docker_startNode =
+    //     `docker run -d \
+    // -p ${params.HTTP_PORT}:${params.HTTP_PORT} \
+    // -p ${params.PORT}:${params.PORT} \
+    // -v $(pwd)/${params.DIR_NODE}:/${params.NODE} \
+    // -v $(pwd)/pwd.txt:/pwd.txt \
+    // --name ${params.NODE} ethereum/client-go \
+    // --datadir ${params.NODE} \
+    // --syncmode full \
+    // --http.api personal,eth,net,web3 \
+    // --http \
+    // --http.addr 0.0.0.0 \
+    // -http.port ${params.HTTP_PORT} \
+    // --authrpc.port ${params.AUTHRPC_PORT}  \
+    // --http.corsdomain '*' \
+    // --allow-insecure-unlock \
+    // --unlock '0x${signer_address}' \
+    // --password /pwd.txt \
+    // --graphql \
+    // --mine \
+    // --miner.threads=2`
     const docker_startNode =
         `docker run -d \
     -p ${params.HTTP_PORT}:${params.HTTP_PORT} \
     -p ${params.PORT}:${params.PORT} \
-    -v $(pwd)/${params.DIR_NODE}:/${params.NODE} \
-    -v $(pwd)/pwd.txt:/pwd.txt \
+    -v ` + path.join(__dirname, params.DIR_NODE) + `:/${params.NODE} \
+    -v ` + path.join(__dirname, 'pwd.txt') + `:/pwd.txt \
     --name ${params.NODE} ethereum/client-go \
     --datadir ${params.NODE} \
     --syncmode full \
@@ -268,8 +292,51 @@ router.delete("/deleteNetwork/:network", (req, res) => {
 
 })
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// TEMP Create an address
+router.post("/createAddress/:network", async (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NODE_NUMBER = 1
+
+    //Initialize parameters 
+    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+
+    //Initialize directory
+    if (fs.existsSync(params.NETWORK_DIR)) {
+        console.log("Directory Exists");
+        deleteNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
+    }
+    createNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
+
+    //createAddress
+    const signer_address = createAddress(params.DIR_NODE, params.NODE)
+    res.status(200).send({ signer_address: signer_address });
+
+})
+
 // TEMP Create the node
-router.post("/createContainer/:network", async (req, res) => {
+router.post("/createNodeDB/:network", async (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NODE_NUMBER = 1
+    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+    const signer_address = await getSignerForNode(req.params.network);
+    //create Allocated Addresses
+    const alloc_addresses = [
+        signer_address,
+        FAUCET_ADDRESS
+    ]
+
+    //create genesis state from genesis_template
+    const genesis_file = generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
+    //res.status(200).send({ genesis_file: genesis_file});
+    const initNode = await initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
+    res.status(200).send({ initNode: initNode.toString() });
+})
+
+// TEMP Create the node
+router.post("/createNodeContainer/:network", async (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
     const NODE_NUMBER = 1
     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
@@ -277,6 +344,21 @@ router.post("/createContainer/:network", async (req, res) => {
     const goNode = await startNode(params, signer_address)
     res.status(200).send({goNode: goNode.toString()});
 })
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+// // TEMP Create the node
+// router.post("/createContainer/:network", async (req, res) => {
+//     const NETWORK_NUMBER = parseInt(req.params.network)
+//     const NODE_NUMBER = 1
+//     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+//     const signer_address = await getSignerForNode(req.params.network);
+//     const goNode = await startNode(params, signer_address)
+//     res.status(200).send({goNode: goNode.toString()});
+// })
 
 // I'm the network
 router.get("/", (req, res) => {
