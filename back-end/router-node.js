@@ -26,11 +26,11 @@ function createParams(network, node) {
     const NODE = `${NETWORK_DIR}nodo${INT_NODE}`
     const NETWORK_CHAINID = 161615 + INT_NETWORK
 
-    const HTTP_PORT = 8545 + INT_NODE + INT_NETWORK
+    const HTTP_PORT = 8545 + INT_NODE + INT_NETWORK * 10
     const DIR_NODE = `${NETWORK_DIR}/${NODE}`
     //const IPCPATH = `\\\\.\\pipe\\${NETWORK_CHAINID}-${NODO}.ipc`
-    const PORT = 30303 + INT_NODE + INT_NETWORK
-    const AUTHRPC_PORT = 8552 + INT_NODE + INT_NETWORK
+    const PORT = 30303 + INT_NODE + INT_NETWORK * 10
+    const AUTHRPC_PORT = 8552 + INT_NODE + INT_NETWORK * 10
 
     return {
         INT_NETWORK, INT_NODE, NODE, NETWORK_DIR, NETWORK_CHAINID, HTTP_PORT,
