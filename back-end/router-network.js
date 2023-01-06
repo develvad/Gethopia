@@ -9,9 +9,6 @@ const { execSync, spawn, spawnSync } = require("child_process");
 const util = require('node:util');
 const exec = util.promisify(require('child_process').exec);
 const path = require("node:path");
-const { log } = require("node:console");
-const { transpileModule } = require("typescript");
-const { ServerResponse } = require("node:http");
 module.exports = router
 
 const BALANCE = "0x200000000000000000000000000000000000000000000000000000000000000"
@@ -29,11 +26,11 @@ function createParams(network, node) {
     const NODE = `${NETWORK_DIR}nodo${INT_NODE}`
     const NETWORK_CHAINID = 161615 + INT_NETWORK
 
-    const HTTP_PORT = 8545 + INT_NODE + INT_NETWORK
+    const HTTP_PORT = 8545 + INT_NODE + INT_NETWORK * 10
     const DIR_NODE = `${NETWORK_DIR}/${NODE}`
     //const IPCPATH = `\\\\.\\pipe\\${NETWORK_CHAINID}-${NODO}.ipc`
-    const PORT = 30303 + INT_NODE + INT_NETWORK
-    const AUTHRPC_PORT = 8552 + INT_NODE + INT_NETWORK
+    const PORT = 30303 + INT_NODE + INT_NETWORK * 10
+    const AUTHRPC_PORT = 8552 + INT_NODE + INT_NETWORK * 10
 
     return {
         INT_NETWORK, INT_NODE, NODE, NETWORK_DIR, NETWORK_CHAINID, HTTP_PORT,
@@ -103,7 +100,7 @@ function createAddress(node_path, node_name) {
 
 
 
-function generateGenesis(chain_id, signer_address, alloc_addresses, network_path) {
+async function generateGenesis(chain_id, signer_address, alloc_addresses, network_path) {
     //const timestamp = Math.round(((new Date()).getTime() / 1000)).toString(16)
     // leemos la plantilla del genesis
     let genesis = JSON.parse(fs.readFileSync('genesis_template.json').toString())
@@ -160,6 +157,7 @@ async function startNode(params, signer_address) {
     //const docker_startNode = "docker run -d -p 8545:8545 -p 30303:30303 -v $(pwd)/nodo1:/nodo1 -v $(pwd)/pwd.txt:/pwd.txt --name eth2 ethereum/client-go --datadir nodo1 --nodiscover --networkid 19999 --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --http.corsdomain '*' --allow-insecure-unlock --unlock '0x3ee83c6f0b679ab87460365851d67e28f46c210d' --password /pwd.txt --graphql --mine --miner.etherbase '0x9E5CC5E873e31C45779b15974c6F57e365a94C99' --miner.threads=2 --bootnodes 'enode://48b4515deeb86d88aef15eb29cc86f94ed01de7a9f9b3002c2c1e094a404aff006d5b9d844206da5031c2e4dcd07473168f6cee1a3a37a70940a4c59d52d0adb@127.0.0.1:0?discport=30301'"
     // const docker_startNode =
     //     `docker run -d \
+    // --network br0 \
     // -p ${params.HTTP_PORT}:${params.HTTP_PORT} \
     // -p ${params.PORT}:${params.PORT} \
     // -v $(pwd)/${params.DIR_NODE}:/${params.NODE} \
@@ -181,6 +179,7 @@ async function startNode(params, signer_address) {
     // --miner.threads=2`
     const docker_startNode =
         `docker run -d \
+        --network br0 \
     -p ${params.HTTP_PORT}:${params.HTTP_PORT} \
     -p ${params.PORT}:${params.PORT} \
     -v ` + path.join(__dirname, params.DIR_NODE) + `:/${params.NODE} \
@@ -346,7 +345,7 @@ router.post("/createNodeDB/:network", async (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
     const NODE_NUMBER = 1
     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-    const signer_address = await getSignerForNode(req.params.network);
+    const signer_address = await getSignerForNode(params.DIR_NODE.toString());
     //create Allocated Addresses
     const alloc_addresses = [
         signer_address,
@@ -354,7 +353,7 @@ router.post("/createNodeDB/:network", async (req, res) => {
     ]
 
     //create genesis state from genesis_template
-    const genesis_file = generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
+    const genesis_file = await generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
     //res.status(200).send({ genesis_file: genesis_file});
     const initNode = await initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
 
@@ -364,6 +363,85 @@ router.post("/createNodeDB/:network", async (req, res) => {
 
     res.status(200).send({ initNode: initNode.toString() });
 })
+
+
+
+
+// TEMP Create the node
+router.post("/createNodeContainer/:network", async (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NODE_NUMBER = 1
+    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+    const signer_address = await getSignerForNode(params.DIR_NODE.toString());
+    const goNode = await startNode(params, signer_address)
+    res.status(200).send({ goNode: goNode.toString() });
+})
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+// // TEMP Create the node
+// router.post("/createContainer/:network", async (req, res) => {
+//     const NETWORK_NUMBER = parseInt(req.params.network)
+//     const NODE_NUMBER = 1
+//     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+//     const signer_address = await getSignerForNode(req.params.network);
+//     const goNode = await startNode(params, signer_address)
+//     res.status(200).send({goNode: goNode.toString()});
+// })
+
+// I'm the network
+router.get("/", (req, res) => {
+    res.send("I'm the network");
+})
+
+// Primero automatizamos el proceso de coger el signer address
+const getSignerForNode = async (nodepath) => {
+    return new Promise((resolve, reject) => {
+        fs.readdir(path.join(__dirname, nodepath) + '/keystore',
+            (err, files) => {
+                if (err) {
+                    console.log('ERR GET_SIGNER_FOR_NODE: ', err);
+                    reject(err);
+                }
+                const data = fs.readFileSync(path.join(__dirname, nodepath) + '/keystore/' + files[0], 'utf8');
+                const { address } = JSON.parse(data);
+                resolve(address)
+            });
+    });
+}
+
+// // Primero automatizamos el proceso de coger el signer address
+// const getSignerForNode = async (id) => {
+//     return new Promise((resolve, reject) => {
+//         fs.readdir(path.join(__dirname) + '/net' + id + '/net' + id + 'nodo1' + '/keystore',
+//             (err, files) => {
+//                 if (err) {
+//                     console.log('ERR GET_SIGNER_FOR_NODE: ', err);
+//                     reject(err);
+//                 }
+//                 const data = fs.readFileSync(path.join(__dirname) + '/net' + id + '/net' + id + 'nodo1' + '/keystore/' + files[0], 'utf8');
+//                 const { address } = JSON.parse(data);
+//                 resolve(address)
+//             });
+//     });
+// }
+
+//  Listamos las redes activas.
+router.get('/listAll', (req, res) => {
+    docker.container.list()
+        .then((containers) => {
+            const mapeado = containers.map((e) => {
+                return {
+                    id: e.data.Id,
+                    name: e.data.Names[0]
+                }
+            });
+            res.send(mapeado);
+        }).catch((e) => res.status(500).send({ res: e.message }))
+});
 
 router.get("/staticNode/:network", async (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
@@ -377,6 +455,8 @@ router.get("/staticNode/:network", async (req, res) => {
 })
 
 
+
+
 const staticNodes = (network_name) => {
 
     const nodos = fs.readdirSync(network_name, { withFileTypes: true })
@@ -384,6 +464,7 @@ const staticNodes = (network_name) => {
     console.log(nodos[1].name);
 
     //if more than 9 nodes will need to revisit
+    //if more than 9 networks need to revisit
     const props = nodos.map(i => {
         return ({
             network: network_name,
@@ -410,64 +491,3 @@ const staticNodes = (network_name) => {
 
     return props
 }
-
-
-// TEMP Create the node
-router.post("/createNodeContainer/:network", async (req, res) => {
-    const NETWORK_NUMBER = parseInt(req.params.network)
-    const NODE_NUMBER = 1
-    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-    const signer_address = await getSignerForNode(req.params.network);
-    const goNode = await startNode(params, signer_address)
-    res.status(200).send({ goNode: goNode.toString() });
-})
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-// // TEMP Create the node
-// router.post("/createContainer/:network", async (req, res) => {
-//     const NETWORK_NUMBER = parseInt(req.params.network)
-//     const NODE_NUMBER = 1
-//     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-//     const signer_address = await getSignerForNode(req.params.network);
-//     const goNode = await startNode(params, signer_address)
-//     res.status(200).send({goNode: goNode.toString()});
-// })
-
-// I'm the network
-router.get("/", (req, res) => {
-    res.send("I'm the network");
-})
-
-// Primero automatizamos el proceso de coger el signer address
-const getSignerForNode = async (id) => {
-    return new Promise((resolve, reject) => {
-        fs.readdir(path.join(__dirname) + '/net' + id + '/net' + id + 'nodo1' + '/keystore',
-            (err, files) => {
-                if (err) {
-                    console.log('ERR GET_SIGNER_FOR_NODE: ', err);
-                    reject(err);
-                }
-                const data = fs.readFileSync(path.join(__dirname) + '/net' + id + '/net' + id + 'nodo1' + '/keystore/' + files[0], 'utf8');
-                const { address } = JSON.parse(data);
-                resolve(address)
-            });
-    });
-}
-
-//  Listamos las redes activas.
-router.get('/listAll', (req, res) => {
-    docker.container.list()
-        .then((containers) => {
-            const mapeado = containers.map((e) => {
-                return {
-                    id: e.data.Id,
-                    name: e.data.Names[0]
-                }
-            });
-            res.send(mapeado);
-        }).catch((e) => res.status(500).send({ res: e.message }))
-});

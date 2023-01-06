@@ -6,8 +6,10 @@ const app = express()
 
 //import routed apps
 const networks = require("./router-network")
+const node = require("./router-node")
 // Routes
 app.use("/network", networks)
+app.use("/node", node)
 
 
 
