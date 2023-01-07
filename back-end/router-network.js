@@ -154,29 +154,6 @@ async function startNode(params, signer_address) {
     console.log("START NODE");
 
     // Init first node to with genesis state and initiallize DB
-    //const docker_startNode = "docker run -d -p 8545:8545 -p 30303:30303 -v $(pwd)/nodo1:/nodo1 -v $(pwd)/pwd.txt:/pwd.txt --name eth2 ethereum/client-go --datadir nodo1 --nodiscover --networkid 19999 --syncmode full --http.api personal,eth,net,web3 --http --http.addr 0.0.0.0 -http.port 8545 --http.corsdomain '*' --allow-insecure-unlock --unlock '0x3ee83c6f0b679ab87460365851d67e28f46c210d' --password /pwd.txt --graphql --mine --miner.etherbase '0x9E5CC5E873e31C45779b15974c6F57e365a94C99' --miner.threads=2 --bootnodes 'enode://48b4515deeb86d88aef15eb29cc86f94ed01de7a9f9b3002c2c1e094a404aff006d5b9d844206da5031c2e4dcd07473168f6cee1a3a37a70940a4c59d52d0adb@127.0.0.1:0?discport=30301'"
-    // const docker_startNode =
-    //     `docker run -d \
-    // --network br0 \
-    // -p ${params.HTTP_PORT}:${params.HTTP_PORT} \
-    // -p ${params.PORT}:${params.PORT} \
-    // -v $(pwd)/${params.DIR_NODE}:/${params.NODE} \
-    // -v $(pwd)/pwd.txt:/pwd.txt \
-    // --name ${params.NODE} ethereum/client-go \
-    // --datadir ${params.NODE} \
-    // --syncmode full \
-    // --http.api personal,eth,net,web3 \
-    // --http \
-    // --http.addr 0.0.0.0 \
-    // -http.port ${params.HTTP_PORT} \
-    // --authrpc.port ${params.AUTHRPC_PORT}  \
-    // --http.corsdomain '*' \
-    // --allow-insecure-unlock \
-    // --unlock '0x${signer_address}' \
-    // --password /pwd.txt \
-    // --graphql \
-    // --mine \
-    // --miner.threads=2`
     const docker_startNode =
         `docker run -d \
         --network br0 \
@@ -200,28 +177,6 @@ async function startNode(params, signer_address) {
     --mine \
     --miner.threads=2`
     //const startNode = execSync(docker_startNode)
-
-    // const docker_startNode =
-    //     `docker run -d \
-    // -p ${params.HTTP_PORT}:${params.HTTP_PORT} \
-    // -p ${params.PORT}:${params.PORT} \
-    // -v $(pwd)/${params.DIR_NODE}:/${params.NODE} \
-    // -v $(pwd)/pwd.txt:/pwd.txt \
-    // --name ${params.NODE} ethereum/client-go \
-    // --datadir ${params.NODE} \
-    // --syncmode full \
-    // --http.api personal,eth,net,web3 \
-    // --http \
-    // --http.addr 0.0.0.0 \
-    // -http.port ${params.HTTP_PORT} \
-    // --authrpc.port ${params.AUTHRPC_PORT}  \
-    // --http.corsdomain '*' \
-    // --allow-insecure-unlock \
-    // --unlock '0x${signer_address}' \
-    // --password /pwd.txt \
-    // --graphql \
-    // --mine \
-    // --miner.threads=2`
 
     async function lsExample2() {
         const { stdout, stderr } = await exec(docker_startNode);
@@ -458,10 +413,10 @@ router.get("/staticNode/:network", async (req, res) => {
 
 
 const staticNodes = (network_name) => {
-
+    
     const nodos = fs.readdirSync(network_name, { withFileTypes: true })
         .filter(i => !i.isFile())
-    console.log(nodos[1].name);
+    // console.log(nodos[1].name);
 
     //if more than 9 nodes will need to revisit
     //if more than 9 networks need to revisit
