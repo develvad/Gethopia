@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "dockerode": "^3.3.4",
     "react-router-dom": "^6.6.1"
   }
 }
