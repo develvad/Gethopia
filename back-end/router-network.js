@@ -170,9 +170,7 @@ function initNodeDB(node_path, node_name, network_name) {
     }
     const result = lsExample();
     ////process.exit()
-
-    return result
-
+    return true;
 }
 
 function delay(time) {

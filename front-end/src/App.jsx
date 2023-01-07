@@ -7,6 +7,7 @@ import Explorador from '../components/explorador/explorador';
 import Personal from '../components/personal/personal';
 import Faucet from '../components/faucet/faucet';
 import NuevaRed from '../components/nuevared/nuevared';
+import NuevoNodo from "../components/nuevoNodo/nuevoNodo.jsx";
 
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
                   <Route path="/personal" element={<Personal/>} />
                   <Route path="/faucet" element={<Faucet/>} />
                   <Route path="/nuevared" element={<NuevaRed/>} />
+                  <Route path="/nuevonodo" element={<NuevoNodo/>} />
                 </Route>
               </Routes>
             </div>
