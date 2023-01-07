@@ -1,4 +1,4 @@
-import { Outlet, Link } from 'react-router-dom'
+import {Outlet, Link, useNavigate} from 'react-router-dom'
 import {useEffect, useState} from "react";
 import axios from "axios";
 import './redes.css';
@@ -8,6 +8,8 @@ const Redes = () => {
     const [sites, setSites] = useState([]);
     const [modalDisp, setModalDisp] = useState(false);
     const [netSelected, setNetSelected] = useState({});
+    const navigate = useNavigate();
+
     const getSites = async () => {
         const sitesFromBack = await axios.get('http://localhost:3000/network/listAll');
         console.log(sitesFromBack.data);
@@ -27,7 +29,6 @@ const Redes = () => {
         console.log(net.name[4]);
         setModalDisp(true);
         setNetSelected(net.name[4]);
-
     }
 
     const closeModal = () => {
@@ -47,9 +48,10 @@ const Redes = () => {
     return (
         <main>
             <header className="dash-titlebar">
-                <span className='btn btn-icon btn-accent-2 ml-md-auto'>           
+                <h3> Redes activas </h3>
+                <span className='btn btn-icon btn-accent-2 ml-md-auto'>
                     <Link style={{color:"#B7C46E"}} className='btn-icon-label' to="/nuevared">Crear nueva red</Link>
-                </span>      
+                </span>
             </header>
 
             <div className="dash-boxes container-fluid">
@@ -88,11 +90,8 @@ const Redes = () => {
                                     </div>
                                 </td>
                                 <td className="table-td-buttons">
-                                    <a href="#" style={{cursor: "not-allowed", pointerEvents: 'auto'}}  className="btn btn-icon btn-primary btn-sm disabled">
-                                        <span className="icon icon-xs fa fa-play"></span>
-                                    </a>
-                                    <a href="#" style={{cursor: "not-allowed", pointerEvents: 'auto'}} className="btn btn-icon btn-accent-2 btn-sm mx-1 disabled">
-                                        <span className="icon icon-xs fa fa-stop"></span>
+                                    <a href="#" onClick={() => navigate("/nuevonodo?red=" + site.name[4] )} className="btn btn-icon btn-primary btn-sm mx-1 ">
+                                        <span className="icon icon-xs fa fa-plus"></span>
                                     </a>
                                     <a href="#" onClick={() => deleteNet(site)} className="btn btn-icon btn-danger btn-sm">
                                         <span className="icon icon-xs fa fa-trash"></span>
