@@ -26,11 +26,11 @@ function createParams(network, node) {
     const NODE = `${NETWORK_DIR}nodo${INT_NODE}`
     const NETWORK_CHAINID = 161615 + INT_NETWORK
 
-    const HTTP_PORT = 8545 + INT_NODE + INT_NETWORK * 10
+    const HTTP_PORT = 8545 + INT_NODE + (INT_NETWORK * 20) 
     const DIR_NODE = `${NETWORK_DIR}/${NODE}`
     //const IPCPATH = `\\\\.\\pipe\\${NETWORK_CHAINID}-${NODO}.ipc`
-    const PORT = 30303 + INT_NODE + INT_NETWORK * 10
-    const AUTHRPC_PORT = 8552 + INT_NODE + INT_NETWORK * 10
+    const PORT = 30303 + INT_NODE + INT_NETWORK * 20
+    const AUTHRPC_PORT = 8552 + INT_NODE + INT_NETWORK * 20
 
     return {
         INT_NETWORK, INT_NODE, NODE, NETWORK_DIR, NETWORK_CHAINID, HTTP_PORT,
@@ -89,41 +89,6 @@ function initNodeDB(node_path, node_name, network_name) {
 
 }
 
-const staticNodes = (network_name) => {
-
-    const nodos = fs.readdirSync(network_name, { withFileTypes: true })
-        .filter(i => !i.isFile())
-    console.log(nodos[1].name);
-
-    //if more than 9 nodes will need to revisit
-    const props = nodos.map(i => {
-        return ({
-            network: network_name,
-            name: i.name,
-            port: (30303 + parseInt(i.name.slice(-1)) + parseInt(network_name.slice(-1))).toString(),
-            nodekey: fs.readFileSync(`${network_name}/${i.name}/geth/nodekey`).toString()
-        })
-    })
-    //console.log(props);
-
-    //Create static-nodes.json
-    const staticNodes = props.map(i => `enode://${i.nodekey}@${i.name}:${i.port}`)
-    console.log(staticNodes);
- 
-    //Check if static-nodes.json file exists and delete for each node + create new static-nodes.json
-    props.forEach(i => {
-        if (fs.existsSync(path.join(__dirname, i.network) + "/" + i.name+ "/static-nodes.json")) {
-            console.log("static-nodes.json exists");
-            fs.unlinkSync(path.join(__dirname, i.network) + "/" + i.name + "/static-nodes.json")
-            console.log(i.name, " static-nodes.json deleted");
-        }
-        fs.writeFileSync(path.join(__dirname, i.network) + "/" + i.name + "/static-nodes.json", JSON.stringify(staticNodes))    
-    })
-
-    return props
-}
-
-
 async function startNode(params, signer_address) {
     console.log("START NODE");
 
@@ -135,6 +100,7 @@ async function startNode(params, signer_address) {
     -v ` + path.join(__dirname, params.DIR_NODE) + `:/${params.NODE} \
     -v ` + path.join(__dirname, 'pwd.txt') + `:/pwd.txt \
     --name ${params.NODE} ethereum/client-go \
+    --port ${params.PORT} \
     --datadir ${params.NODE} \
     --syncmode full \
     --http.api personal,eth,net,web3 \
@@ -253,16 +219,4 @@ const getSignerForNode = async (nodepath) => {
             });
     });
 }
-
-
-router.get("/staticNode/:network", async (req, res) => {
-    const NETWORK_NUMBER = parseInt(req.params.network)
-    const NETWORK_DIR = `net${NETWORK_NUMBER}`
-    // const NODE_NUMBER = 1
-    // const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-    // console.log("params: ", params);
-    const response = staticNodes(NETWORK_DIR)
-    res.status(200).send({ Reply: response })
-
-})
 
