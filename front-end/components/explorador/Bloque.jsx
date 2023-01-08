@@ -13,7 +13,8 @@ export default function Bloque() {
     if(error)
         return <h1>Error</h1>
 
-    return <div>
+    return (
+    <div>
         <table className="table">
             <thead>
                 <tr>
@@ -35,5 +36,5 @@ export default function Bloque() {
             {JSON.stringify(data, null, 4)}
         </pre>
     </div>
-    
+    )
 }

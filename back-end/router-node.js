@@ -110,7 +110,7 @@ async function startNode(params, signer_address) {
     --authrpc.port ${params.AUTHRPC_PORT}  \
     --http.corsdomain '*' \
     --allow-insecure-unlock \
-    --unlock '0x${signer_address}' \
+    --unlock 0x${signer_address} \
     --password /pwd.txt \
     --graphql \
     --mine \
@@ -201,11 +201,10 @@ router.post("/createNodeContainer/:network/:node", async (req, res) => {
     const NODE_NUMBER = parseInt(req.params.node)
     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
     const signer_address = await getSignerForNode(params.DIR_NODE.toString());
+    console.log({signer_address: signer_address});
     const goNode = await startNode(params, signer_address)
     res.status(200).send({ goNode: goNode.toString() });
 })
-
-
 
 // I'm the network
 router.get("/", (req, res) => {
