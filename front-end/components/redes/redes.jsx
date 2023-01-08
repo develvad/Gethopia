@@ -47,6 +47,7 @@ const Redes = () => {
     return (
         <main>
             <header className="dash-titlebar">
+            <h3>Listado de redes</h3>
                 <span className='btn btn-icon btn-accent-2 ml-md-auto'>           
                     <Link style={{color:"#B7C46E"}} className='btn-icon-label' to="/nuevared">Crear nueva red</Link>
                 </span>      
