@@ -4,6 +4,9 @@ import SideBar from "../components/sidebar/sidebar.jsx";
 import Header from "../components/header/header.jsx";
 import Redes from "../components/redes/redes.jsx";
 import Explorador from '../components/explorador/explorador';
+import Bloque from '../components/explorador/Bloque';
+import Saldo from '../components/explorador/Saldo';
+import Tx from '../components/explorador/Tx';
 import Personal from '../components/personal/personal';
 import Faucet from '../components/faucet/faucet';
 import NuevaRed from '../components/nuevared/nuevared';
@@ -23,7 +26,11 @@ function App() {
                   <Route index element={<Redes/>} />
                   <Route path="*" element={<Redes/>} />
                   <Route path="/redes" element={<Redes/>} />
-                  <Route path="/explorador" element={<Explorador/>} />
+                  <Route path="/explorador" element={<Explorador/>}>
+                    <Route path="bloque/:numBloque" element={<Bloque/>} />
+                    <Route path="tx/:hashTx" element={<Tx/>} />
+                    <Route path="saldo/:dir" element={<Saldo/>}/>
+                  </Route>
                   <Route path="/personal" element={<Personal/>} />
                   <Route path="/faucet" element={<Faucet/>} />
                   <Route path="/nuevared" element={<NuevaRed/>} />

@@ -110,7 +110,7 @@ async function startNode(params, signer_address) {
     --authrpc.port ${params.AUTHRPC_PORT}  \
     --http.corsdomain '*' \
     --allow-insecure-unlock \
-    --unlock '0x${signer_address}' \
+    --unlock 0x${signer_address} \
     --password /pwd.txt \
     --graphql \
     --mine \
@@ -129,17 +129,25 @@ async function startNode(params, signer_address) {
 }
 
 
-// Delete the Network
+// Delete the node
 router.delete("/deleteNode/:network/:node", (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
     const NETWORK_DIR = `net${NETWORK_NUMBER}`
-    const INT_NODE = 1
+    const INT_NODE = req.params.node
     const NODE = `${NETWORK_DIR}nodo${INT_NODE}`
-
-    ///////////// TO BE DONE
-    ///////////// TO BE DONE
     
-    res.status(200).send({ NetworkRemoved: "OK" });
+    const docker_remove_node = `docker rm -f ${NODE}`
+    const result = exec(docker_remove_node, (error, stdout, stderr) => {
+        console.log("borrando")
+        if (error) {
+            res.send({ error })
+            return
+        }
+    })
+
+    deleteNodeDirectory(`${NETWORK_DIR}/${NODE}`)
+
+    res.status(200).send({ NodeRemoved: "OK" });
 
 })
 
@@ -193,11 +201,10 @@ router.post("/createNodeContainer/:network/:node", async (req, res) => {
     const NODE_NUMBER = parseInt(req.params.node)
     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
     const signer_address = await getSignerForNode(params.DIR_NODE.toString());
+    console.log({signer_address: signer_address});
     const goNode = await startNode(params, signer_address)
     res.status(200).send({ goNode: goNode.toString() });
 })
-
-
 
 // I'm the network
 router.get("/", (req, res) => {
