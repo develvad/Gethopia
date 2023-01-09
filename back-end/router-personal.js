@@ -12,5 +12,6 @@ const web3 = new Web3("https://mainnet.infura.io/v3/20b55e65c65649c686d7abc8e485
 router.get("/saldo/:cuenta", async (req, res) =>{
     const saldo = await web3.eth.getBalance(req.params.cuenta)
     // res.send({ saldo })
-    res.send({ saldo : web3.utils.fromWei(saldo, 'ether') })
+    const saldoEthers = web3.utils.fromWei(saldo, 'ether')
+    res.send({ saldoEthers })
 })
