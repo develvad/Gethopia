@@ -61,5 +61,11 @@ Content-Type: application/json
 # Content-Type: application/json 
 
 ###
-GET http://localhost:3000/explorer/saldo/0xA9c13244c9e66Ca2a061C500447C06b2698B7aE2
+GET http://localhost:3000/explorer/saldo/0xB36Fb73bFA836a928dAfA8131095b4e7e598b8a7
+Content-Type: application/json 
+
+# Peticiones personal
+
+###
+GET http://localhost:3000/personal/saldo/0xB36Fb73bFA836a928dAfA8131095b4e7e598b8a7
 Content-Type: application/json 
