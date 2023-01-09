@@ -32,7 +32,6 @@ router.get("/tx/:numTx", async (req,res) => {
     res.send(tx)
 })
 
-
 router.get("/saldo/:dir", async (req,res) => {
     const saldo = await web3.eth.getBalance(req.params.dir)
     res.send({'saldo wei': saldo, 'saldo ether': web3.utils.fromWei(saldo, 'ether')})

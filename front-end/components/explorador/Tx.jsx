@@ -20,19 +20,19 @@ export default function Tx() {
                 <tr>
                     <th>Bloque</th>
                     <td>
-                       <Link to={`/bloque/${data.blockNumber}`}>{data.blockNumber}</Link> 
+                       <Link to={`/explorador/bloque/${data.blockNumber}`}>{data.blockNumber}</Link> 
                     </td>
                 </tr>
                 <tr>
                     <th>Desde</th>
                     <td>
-                       <Link to={`/saldo/${data.from}`}>{data.from}</Link> 
+                       <Link to={`/explorador/saldo/${data.from}`}>{data.from}</Link> 
                     </td>
                 </tr>
                 <tr>
                     <th>A</th>
                     <td>
-                       <Link to={`/saldo/${data.to}`}>{data.to}</Link> 
+                       <Link to={`/explorador/saldo/${data.to}`}>{data.to}</Link> 
                     </td>
                 </tr>
                 <tr>

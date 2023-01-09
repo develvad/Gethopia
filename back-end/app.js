@@ -8,11 +8,13 @@ const app = express()
 const networks = require("./router-network")
 const node = require("./router-node")
 const explorer = require("./router-explorer")
+const personal = require("./router-personal")
 
 // Routes
 app.use("/network", networks)
 app.use("/node", node)
 app.use("/explorer", explorer)
+app.use("/personal", personal)
 
 // Middles
 app.use(bodyParser.json());

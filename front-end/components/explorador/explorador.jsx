@@ -1,5 +1,6 @@
 import { Outlet, useNavigate } from "react-router-dom"
 import { useForm } from 'react-hook-form'
+import {useEffect, useState} from "react";
 
 const Explorador = () => {
 
@@ -15,14 +16,32 @@ const Explorador = () => {
 
     }
 
+    const [redes, setRedes] = useState([]);
+    const [redActiva, setredActiva] = useState([]);
+    const getRedes = async () => {
+        // const sitesFromBack = await axios.get('http://localhost:3000/network/listAll');
+        // console.log(sitesFromBack.data);
+        // setRedes(sitesFromBack.data);
+        setRedes([1,2,3]);
+    }    
+    useEffect( () => {
+        getRedes();
+    } ,[]);
+
     return( 
     <main>
         <header className="dash-titlebar">
             <h3>Explorador de redes locales</h3>
         </header>
-            <form className='d-flex justify-content-center gap-1 my-2' onSubmit={handleSubmit(introducirInfo)}>
-                <input {...register('datosForm')} size={100}></input>
-                <button className="mx-3 btn btn-primary">Introducir</button>
+        
+            <form className='d-flex gap-1 my-2 mx-2' onSubmit={handleSubmit(introducirInfo)}>
+                <select style={{color:"#B7C46E"}} className='btn btn-icon-label btn-accent-2' onChange={(e) => setredActiva(e.target.value.slice(4))}>
+                    {
+                        redes.map((numRed) => <option key={numRed}>Red {numRed}</option>)
+                    }
+                </select>
+                <input className="mx-1" {...register('datosForm')} size={100} placeholder=" Introduzca hash, número de bloque o cuenta"></input>
+                <button style={{color:"#B7C46E"}} className='btn btn-icon-label btn-accent-2'>Buscar</button>
             </form>
             <div className="border my-3 p-2">
                 <Outlet></Outlet>

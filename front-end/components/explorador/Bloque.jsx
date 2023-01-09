@@ -25,7 +25,7 @@ export default function Bloque() {
                 {
                     data.transactions.map((tx, indice) => 
                         <tr key={indice}>  
-                            <Link to={`/tx/${tx}`}>{tx}</Link> 
+                            <Link to={`/explorador/tx/${tx}`}>{tx}</Link> 
                         </tr>
                     )
                 }
