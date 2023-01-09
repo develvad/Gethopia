@@ -5,42 +5,78 @@ import {useEffect, useState} from "react";
 import {Link, useSearchParams} from "react-router-dom";
 
 const NuevoNodo = () => {
-    const { register, handleSubmit } = useForm()
+    const { handleSubmit } = useForm()
+    const [idRed, setIdRed] = useState('')
     const [idNodo, setIdNodo] = useState('');
     const [searchParams, setSearchParams] = useSearchParams();
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        setIdNodo(searchParams.get('red'));
+        setIdRed(searchParams.get('red'));
+        setIdNodo(searchParams.get('nodo'));
     });
 
+    useEffect(() => {
+        console.log(idRed);
+        if (idRed) {
 
-    const { isLoading, error, data, refetch, isFetching } =
+        }
+    }, [idNodo]);
+
+    const { isLoading: isLoadingAddr, error: errorAddr, data: dataAddr, refetch: reftechAddr, isFetching: isFetchingAddr } =
         useQuery(['newAddress'] , async () => {
-            console.log('idRED: ' + idNodo);
-            return await axios.post('ENDPOINT PARA CREAR NUEVO NODO' + idNodo);
+            return await axios.post('http://localhost:3000/node/createNodeAddress/' + idRed + '/' + idNodo);
+        }, {enabled: false});
+
+    const { isLoading: isLoadingDB, error: errorDB, data: dataDB, refetch: reftechDB, isFetching: isFetchingDB } =
+        useQuery(['newNode'] , async () => {
+            return await axios.post('http://localhost:3000/node/createNodeDB/' + idRed + '/' + idNodo);
+        }, {enabled: false});
+
+    const { isLoading: isLoadingStatic, error: errorStatic, data: dataStatic, refetch: reftechStatic, isFetching: isFetchingStatic } =
+        useQuery(['newStatic'] , async () => {
+            return await axios.get(' http://localhost:3000/network/staticNode/' + idRed);
+        }, {enabled: false});
+
+    const { isLoading: isLoadingCont, error: errorCont, data: dataCont, refetch: reftechCont, isFetching: isFetchingCont } =
+        useQuery(['newContainer'] , async () => {
+            return await axios.post('http://localhost:3000/node/createNodeContainer/' + idRed +  '/' + idNodo);
         }, {enabled: false});
 
     const alPulsar = (datosBoton) => {
-        console.log(datosBoton);
-        refetch();
 
+        setLoading(true);
+        setTimeout(() => {
+            reftechAddr().then(() => {
+                reftechDB().then(() => {
+                    setTimeout(() => {
+                        reftechStatic().then(() =>{
+                            reftechCont().then(() => {
+                                setLoading(false);
+                            });
+                        });
+                    }, 1000);
+                });
+            })
+        }, 100);
     }
 
     return(
 
         <div>
             <header className="dash-titlebar mb-2">
-                <h3> Nuevo nodo para la red: <strong> <u> { idNodo } </u> </strong>  </h3>
+                { !loading && <h3> Nuevo nodo para la red: <strong> <u> { idRed } </u> </strong>  </h3>}
+                { loading && <h3> Creando nuevo Nodo  </h3> }
+
 
             </header>
-            { isFetching &&
+            { loading &&
                 <>
-                    <h3 className='mx-2 my-2'>---</h3>
                     <img src="/public/loading.svg"/>
                 </>
                 }
             {
-                !isFetching &&
+                !loading &&
                 <>
                     <form onSubmit={handleSubmit(alPulsar)}>
 {/*                        <div className="form-group mx-2">

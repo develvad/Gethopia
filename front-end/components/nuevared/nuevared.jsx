@@ -2,7 +2,6 @@ import { useForm } from 'react-hook-form'
 import {useQuery} from "react-query";
 import axios from "axios";
 import {useEffect, useState} from "react";
-import {Link} from "react-router-dom";
 
 const NuevaRed = () => {
     const { register, handleSubmit } = useForm()
@@ -16,9 +15,13 @@ const NuevaRed = () => {
             setTimeout(() => {
                 reftechAddr().then(() => {
                     reftechDB().then(() => {
-                        reftechCont().then(() => {
-                            setLoading(false);
-                        })
+                        setTimeout(() => {
+                            reftechStatic().then(() =>{
+                                reftechCont().then(() => {
+                                    setLoading(false);
+                                });
+                            });
+                        }, 500)
                     });
                 })
             }, 100);
@@ -27,19 +30,20 @@ const NuevaRed = () => {
 
     const { isLoading: isLoadingAddr, error: errorAddr, data: dataAddr, refetch: reftechAddr, isFetching: isFetchingAddr } =
         useQuery(['newAddress'] , async () => {
-            console.log('idRED: ' + idRed);
             return await axios.post('http://localhost:3000/network/createAddress/' + idRed);
         }, {enabled: false});
 
     const { isLoading: isLoadingDB, error: errorDB, data: dataDB, refetch: reftechDB, isFetching: isFetchingDB } =
         useQuery(['newNode'] , async () => {
-            console.log('idRED: ' + idRed);
             return await axios.post('http://localhost:3000/network/createNodeDB/' + idRed);
+        }, {enabled: false});
+    const { isLoading: isLoadingStatic, error: errorStatic, data: dataStatic, refetch: reftechStatic, isFetching: isFetchingStatic } =
+        useQuery(['newStatic'] , async () => {
+            return await axios.get(' http://localhost:3000/network/staticNode/' + idRed);
         }, {enabled: false});
 
     const { isLoading: isLoadingCont, error: errorCont, data: dataCont, refetch: reftechCont, isFetching: isFetchingCont } =
         useQuery(['newContainer'] , async () => {
-            console.log('idRED: ' + idRed);
             return await axios.post('http://localhost:3000/network/createNodeContainer/' + idRed);
         }, {enabled: false});
 
