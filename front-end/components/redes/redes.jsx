@@ -6,15 +6,49 @@ import {useQuery} from "react-query";
 
 const Redes = () => {
     const [sites, setSites] = useState([]);
+    const [newSites, setNewSites] = useState([]);
     const [modalDisp, setModalDisp] = useState(false);
     const [netSelected, setNetSelected] = useState({});
     const navigate = useNavigate();
 
     const getSites = async () => {
         const sitesFromBack = await axios.get('http://localhost:3000/network/listAll');
-        console.log(sitesFromBack.data);
+        let tempArr = [];
+
+        if(sitesFromBack.data && sitesFromBack.data.length >= 1) {
+            sitesFromBack.data.forEach((container) => {
+                console.log(container);
+                let tempObj = {};
+                if (container.name.endsWith('nodo1')) {
+                    console.log('Entro a nodo1');
+                    console.log(container.name.indexOf('nodo'));
+                    tempObj.netName = container.name.substring(1, 5);
+                    tempObj.nodeName = container.name.substring(container.name.indexOf('nodo'), container.name.length);
+                    tempObj.name = container.name;
+                    tempObj.id = container.id;
+                    tempObj.child = [];
+                    tempArr.push(tempObj);
+                }
+            });
+            sitesFromBack.data.forEach((container) => {
+              let nodeObjTem = {};
+                if (!container.name.endsWith('nodo1')) {
+                    console.log('Nodo nuevo');
+                    const netName = nodeObjTem.netName = container.name.substring(1, 5);
+                    const indexOfNet = tempArr.findIndex((el) => el.netName === netName)
+                    nodeObjTem.netName = netName;
+                    nodeObjTem.nodeName = container.name.substring(container.name.indexOf('nodo'), container.name.length);
+                    nodeObjTem.name = container.name;
+                    nodeObjTem.id = container.id;
+                    tempArr[indexOfNet].child.push(nodeObjTem);
+                }
+            });
+            console.log(tempArr);
+        }
         setSites(sitesFromBack.data);
+        setNewSites(tempArr);
     }
+
     useEffect( () => {
         getSites();
     } ,[]);
@@ -25,8 +59,6 @@ const Redes = () => {
     }, {enabled: false});
 
     const deleteNet = (net) => {
-        console.log(net);
-        console.log(net.name[4]);
         setModalDisp(true);
         setNetSelected(net.name[4]);
     }
@@ -70,17 +102,22 @@ const Redes = () => {
                         </tr>
                         </thead>
                         <tbody>
-                        { sites.map((site, i) => {
+                        { newSites.map((site, i) => {
                             return (<tr key={i}>
                                 <td>
                                     <input type="checkbox" value="option-1" />
                                 </td>
                                 <td><a href="#">{site.name.slice(1,5)}</a></td>
-                                <td>{site.id.slice(0,9)}...{ site.id.slice(site.id.length -5, site.id.length )}</td>
+                                <td>{ site.netName }</td>
                                 <td className="table-td-select">
                                     <select className="form-control" id="example-select-2">
-                                        <option>Nodo1</option>
-                                        <option>...</option>
+                                        <option>nodo1</option>
+                                        {
+                                            site.child && site.child.map((child, i) => {
+                                                return <option key={i}>{ child.nodeName }</option>
+                                            })
+                                        }
+
                                     </select>
                                 </td>
                                 <td className="table-td-progress">
@@ -90,7 +127,7 @@ const Redes = () => {
                                     </div>
                                 </td>
                                 <td className="table-td-buttons">
-                                    <a href="#" onClick={() => navigate("/nuevonodo?red=" + site.name[4] )} className="btn btn-icon btn-primary btn-sm mx-1 ">
+                                    <a href="#" onClick={() => navigate("/nuevonodo?red=" + site.netName[3] + '&nodo=' + parseInt(site.child.length + 2, 10) )} className="btn btn-icon btn-primary btn-sm mx-1 ">
                                         <span className="icon icon-xs fa fa-plus"></span>
                                     </a>
                                     <a href="#" onClick={() => deleteNet(site)} className="btn btn-icon btn-danger btn-sm">
