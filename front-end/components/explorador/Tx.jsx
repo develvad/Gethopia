@@ -4,8 +4,13 @@ import { getTx } from './api'
 import { Link } from 'react-router-dom'
 
 export default function Tx() {
-    const params = useParams()
-    const {data, isLoading, error} = useQuery(['tx', params.hashTx], getTx)
+    // const params = useParams()
+    // const {data, isLoading, error} = useQuery(['tx', params.hashTx], getTx)
+
+    const {redActiva, hashTx} = useParams()
+    const { data, isLoading, error } = useQuery("numBloque", () => {
+        return fetch(`http://localhost:3000/explorer/${redActiva}/bloque/${hashTx}`).then(res => res.json())
+    })
 
     if(isLoading) 
         return <h1>Cargando...</h1>

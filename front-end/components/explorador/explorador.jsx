@@ -1,32 +1,52 @@
 import { Outlet, useNavigate } from "react-router-dom"
 import { useForm } from 'react-hook-form'
-import {useEffect, useState} from "react";
+import {useEffect, useState, useContext} from "react";
+// import { Contexto } from '../../src/main'
+import { Contexto } from '../../src/App'
 
 const Explorador = () => {
+    const [estado, setEstado] = useContext(Contexto)
 
     const {register, handleSubmit} = useForm()
     const navegar = useNavigate()
     const introducirInfo = (datos) => {
+        // if(datos.datosForm.length == 66) // Si la longitud es 66 navegamos a tx
+        //     navegar(`tx/${datos.datosForm}`)
+        // if(datos.datosForm.length == 42) // Si la longitud es 42 navegamos a saldo
+        //     navegar(`saldo/${datos.datosForm}`)
+        // if(/^\d+\.?\d*$/.test(datos.datosForm)) //Si el dato es un número navegamos a bloque
+        //     navegar(`bloque/${datos.datosForm}`)
         if(datos.datosForm.length == 66) // Si la longitud es 66 navegamos a tx
-            navegar(`tx/${datos.datosForm}`)
+            navegar(estado.redActiva + `/tx/${datos.datosForm}`)
         if(datos.datosForm.length == 42) // Si la longitud es 42 navegamos a saldo
-            navegar(`saldo/${datos.datosForm}`)
+            navegar(estado.redActiva + `/saldo/${datos.datosForm}`)
         if(/^\d+\.?\d*$/.test(datos.datosForm)) //Si el dato es un número navegamos a bloque
-            navegar(`bloque/${datos.datosForm}`)
+            navegar(estado.redActiva + `/bloque/${datos.datosForm}`)
 
     }
 
     const [redes, setRedes] = useState([]);
-    const [redActiva, setredActiva] = useState([]);
+
+    // const [estado, setEstado] = useContext(Contexto)
+    const [redActiva, setredActiva] = useState(estado.redActiva);
     const getRedes = async () => {
         // const sitesFromBack = await axios.get('http://localhost:3000/network/listAll');
         // console.log(sitesFromBack.data);
         // setRedes(sitesFromBack.data);
         setRedes([1,2,3]);
     }    
+
     useEffect( () => {
         getRedes();
     } ,[]);
+
+    function alCambiar(redSeleccionada) {
+        setredActiva(redSeleccionada)
+        setEstado({ ...estado, redActiva: redActiva })
+        console.log('redActiva '+redActiva)
+        console.log('redSeleccionada '+ redSeleccionada)
+        console.log('estado.redActiva '+estado.redActiva)
+    }
 
     return( 
     <main>
@@ -35,7 +55,8 @@ const Explorador = () => {
         </header>
         
             <form className='d-flex gap-1 my-2 mx-2' onSubmit={handleSubmit(introducirInfo)}>
-                <select style={{color:"#B7C46E"}} className='btn btn-icon-label btn-accent-2' onChange={(e) => setredActiva(e.target.value.slice(4))}>
+                {/* <select style={{color:"#B7C46E"}} className='btn btn-icon-label btn-accent-2' onChange={(e) => setredActiva(e.target.value.slice(4))}> */}
+                <select style={{color:"#B7C46E"}} className='btn btn-icon-label btn-accent-2' onChange={(e) => alCambiar(e.target.value.slice(4))}>
                     {
                         redes.map((numRed) => <option key={numRed}>Red {numRed}</option>)
                     }
