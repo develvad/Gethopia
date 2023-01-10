@@ -33,7 +33,7 @@ const Personal = () => {
             <div className="container mx-1 my-1">
                 <div>Cuenta: {cuenta}</div>
                 {/* <div>Saldo: {JSON.stringify(saldo)} ETH</div> */}
-                <div>Saldo: {JSON.parse(JSON.stringify(saldo.saldo))} ETH</div>
+                <div>Saldo: {saldo.saldoEthers} ETH</div>
             </div>
         </main>
 
