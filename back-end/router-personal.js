@@ -14,5 +14,4 @@ router.get("/saldo/:cuenta", async (req, res) =>{
     // res.send({ saldo })
     const saldoEthers = web3.utils.fromWei(saldo, 'ether')
     res.send({ saldoEthers })
-    // res.send({ saldo : web3.utils.fromWei(saldo, ‘ether’) })
 })

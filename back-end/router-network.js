@@ -434,9 +434,6 @@ router.get("/staticNode/:network", async (req, res) => {
 
 })
 
-
-
-
 const staticNodes = (network_name) => {
     
     const nodos = fs.readdirSync(network_name, { withFileTypes: true })
@@ -449,7 +446,7 @@ const staticNodes = (network_name) => {
     const props = nodos.map((i, index) => {
         // docker run --rm -v $(pwd)/nodo1:/nodo1 ethereum/client-go:alltools-latest bootnode --nodekey /nodo1/geth/nodekey -writeaddress
 
-        const docker_nodeKey = 'docker run --rm -v ' + path.join(__dirname)+ `/${network_name}/${i.name}` + `:/${i.name} --name nodeKey ethereum/client-go:alltools-latest bootnode --nodekey ${i.name}/geth/nodekey -writeaddress`
+        const docker_nodeKey = 'docker run --rm -v ' + path.join(__dirname) + `/${network_name}/${i.name}` + `:/${i.name} --name nodeKey ethereum/client-go:alltools-latest bootnode --nodekey ${i.name}/geth/nodekey -writeaddress`
         // const docker_nodeKey = 'docker run --rm -v $(pwd)' + `/${network_name}/${i.name}` + `:/${i.name} --name nodeKey ethereum/client-go:alltools-latest bootnode --nodekey ${i.name}/geth/nodekey -writeaddress`
         //const docker_nodeKey = 'docker run --rm -v $(pwd)/net11/net11nodo1:/nodo1 ethereum/client-go:alltools-latest bootnode --nodekey /nodo1/geth/nodekey -writeaddress'
         const result = execSync(docker_nodeKey)

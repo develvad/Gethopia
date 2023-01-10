@@ -9,12 +9,14 @@ const networks = require("./router-network")
 const node = require("./router-node")
 const explorer = require("./router-explorer")
 const personal = require("./router-personal")
+const faucet = require("./router-faucet")
 
 // Routes
 app.use("/network", networks)
 app.use("/node", node)
 app.use("/explorer", explorer)
 app.use("/personal", personal)
+app.use("/faucet", faucet)
 
 // Middles
 app.use(bodyParser.json());
