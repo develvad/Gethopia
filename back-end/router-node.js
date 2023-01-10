@@ -133,8 +133,9 @@ async function startNode(params, signer_address) {
 router.delete("/deleteNode/:network/:node", (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
     const NETWORK_DIR = `net${NETWORK_NUMBER}`
-    const INT_NODE = req.params.node
+    const INT_NODE = parseInt(req.params.node)
     const NODE = `${NETWORK_DIR}nodo${INT_NODE}`
+    const DIR_NODE = `${NETWORK_DIR}/${NODE}`
     
     const docker_remove_node = `docker rm -f ${NODE}`
     const result = exec(docker_remove_node, (error, stdout, stderr) => {
@@ -145,7 +146,7 @@ router.delete("/deleteNode/:network/:node", (req, res) => {
         }
     })
 
-    deleteNodeDirectory(`${NETWORK_DIR}/${NODE}`)
+    deleteNodeDirectory(DIR_NODE)
 
     res.status(200).send({ NodeRemoved: "OK" });
 

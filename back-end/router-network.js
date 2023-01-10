@@ -123,36 +123,6 @@ async function generateGenesis(chain_id, signer_address, alloc_addresses, networ
     return final_genesis
 }
 
-// const generateGenesis = async (chain_id, signer_address, alloc_addresses, network_path) => {
-//     return new Promise((resolve, reject) => {
-//         fs.readdir(path.join(__dirname),
-//             (err, files) => {
-//                 if (err) {
-//                     console.log('ERR READ_DIR_GENESIS_TEMPLATE: ', err);
-//                     reject(err);
-//                 }
-//                 // leemos la plantilla del genesis
-//                 let genesis = JSON.parse(fs.readFileSync('genesis_template.json').toString())
-
-//                 // genesis.timestamp = `0x${timestamp}`
-//                 genesis.config.chainId = chain_id
-//                 genesis.extraData = `0x${'0'.repeat(64)}${signer_address}${'0'.repeat(130)}`
-
-
-//                 genesis.alloc = alloc_addresses.reduce((acc, item) => {
-//                     acc[item] = { balance: BALANCE }
-//                     return acc
-//                 }, {})
-
-
-//                 fs.writeFileSync(`${network_path}/genesis.json`, JSON.stringify(genesis))
-
-//                 const final_genesis = JSON.parse(fs.readFileSync(`${network_path}/genesis.json`).toString())
-//                 resolve(final_genesis)
-//             });
-//     });
-// }
-
 
 function initNodeDB(node_path, node_name, network_name) {
 
@@ -231,168 +201,6 @@ async function startNode(params, signer_address) {
     return result2
 }
 
-// Create the network
-router.post("/createNetwork/:network", (req, res) => {
-    const NETWORK_NUMBER = parseInt(req.params.network)
-    const NODE_NUMBER = 1
-    //const FAUCET_ADDRESS = parseInt(req.params.address)    
-    //const FAUCET_ADDRESS = req.body.address
-
-    //CREATE BOOT NODE --> Not needed for V1
-    //const bootnode = createBootNode()
-
-    //Initialize parameters 
-    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-
-    //Initialize directory
-    if (fs.existsSync(params.NETWORK_DIR)) {
-        console.log("Directory Exists");
-        deleteNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
-    }
-    createNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
-
-    //createAddress
-    const signer_address = createAddress(params.DIR_NODE, params.NODE)
-    //res.status(200).send({ signer_address: signer_address });
-
-
-    //create Allocated Addresses
-    const alloc_addresses = [
-        signer_address,
-        FAUCET_ADDRESS
-    ]
-
-    //create genesis state from genesis_template
-    const genesis_file = generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
-    //res.status(200).send({ genesis_file: genesis_file});
-
-
-    //initialize nodeDB
-    const initnodeDB = initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
-    delay(2000)
-    //res.status(200).send({initnodeDB: initnodeDB.toString()});
-
-    //signer_address = 'b6da28fee3e0cb52df1fe72a74b271b3bc385d38'
-    //start container_node
-    const goNode = startNode(params, signer_address)
-    res.status(200).send({ goNode: goNode.toString() });
-})
-
-// Delete the Network
-router.delete("/deleteNetwork/:network", (req, res) => {
-    const NETWORK_NUMBER = parseInt(req.params.network)
-    const NETWORK_DIR = `net${NETWORK_NUMBER}`
-    const INT_NODE = 1
-    const NODE = `${NETWORK_DIR}nodo${INT_NODE}`
-
-    //stop node
-    const docker_remove_network = `docker rm -f ${NODE}`
-    const result = exec(docker_remove_network, (error, stdout, stderr) => {
-        console.log("borrando")
-        if (error) {
-            res.send({ error })
-            return
-        }
-    })
-    //execSync(docker_remove_network)
-
-    //remove all network files
-    fs.rmSync(NETWORK_DIR, { recursive: true }, (err) => {
-        if (err) {
-            // File deletion failed
-            console.error(err.message);
-            console.log("Nothing to Delete");
-            return;
-        }
-        console.log("Deleted successfully");
-    })
-    res.status(200).send({ NetworkRemoved: "OK" });
-
-})
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// TEMP Create an address
-router.post("/createAddress/:network", async (req, res) => {
-    const NETWORK_NUMBER = parseInt(req.params.network)
-    const NODE_NUMBER = 1
-
-    //Initialize parameters 
-    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-
-    //Initialize directory
-    if (fs.existsSync(params.NETWORK_DIR)) {
-        console.log("Directory Exists");
-        deleteNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
-    }
-    createNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
-
-    //createAddress
-    const signer_address = createAddress(params.DIR_NODE, params.NODE)
-    res.status(200).send({ signer_address: signer_address });
-
-})
-
-// TEMP Create the node
-router.post("/createNodeDB/:network", async (req, res) => {
-    const NETWORK_NUMBER = parseInt(req.params.network)
-    const NODE_NUMBER = 1
-    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-    const signer_address = await getSignerForNode(params.DIR_NODE.toString());
-    //create Allocated Addresses
-    const alloc_addresses = [
-        signer_address,
-        FAUCET_ADDRESS
-    ]
-
-    //create genesis state from genesis_template
-    const genesis_file = await generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
-    //exit
-    //res.status(200).send({ genesis_file: genesis_file});
-    const initNode = await initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
-
-    //update/create static-nodes.json
-    const sn_type = 'create'
-    //const staticNodes = staticNodes(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
-
-    res.status(200).send({ initNode: initNode.toString() });
-})
-
-
-
-
-// TEMP Create the node
-router.post("/createNodeContainer/:network", async (req, res) => {
-    const NETWORK_NUMBER = parseInt(req.params.network)
-    const NODE_NUMBER = 1
-    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-    const signer_address = await getSignerForNode(params.DIR_NODE.toString());
-    console.log({signer_address: signer_address});
-    const goNode = await startNode(params, signer_address)
-    res.status(200).send({ goNode: goNode.toString() });
-})
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-// // TEMP Create the node
-// router.post("/createContainer/:network", async (req, res) => {
-//     const NETWORK_NUMBER = parseInt(req.params.network)
-//     const NODE_NUMBER = 1
-//     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-//     const signer_address = await getSignerForNode(req.params.network);
-//     const goNode = await startNode(params, signer_address)
-//     res.status(200).send({goNode: goNode.toString()});
-// })
-
-// I'm the network
-router.get("/", (req, res) => {
-    res.send("I'm the network");
-})
-
 // Primero automatizamos el proceso de coger el signer address
 const getSignerForNode = async (nodepath) => {
     return new Promise((resolve, reject) => {
@@ -408,31 +216,6 @@ const getSignerForNode = async (nodepath) => {
             });
     });
 }
-
-//  Listamos las redes activas.
-router.get('/listAll', (req, res) => {
-    docker.container.list()
-        .then((containers) => {
-            const mapeado = containers.map((e) => {
-                return {
-                    id: e.data.Id,
-                    name: e.data.Names[0]
-                }
-            });
-            res.send(mapeado);
-        }).catch((e) => res.status(500).send({ res: e.message }))
-});
-
-router.get("/staticNode/:network", async (req, res) => {
-    const NETWORK_NUMBER = parseInt(req.params.network)
-    const NETWORK_DIR = `net${NETWORK_NUMBER}`
-    // const NODE_NUMBER = 1
-    // const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-    // console.log("params: ", params);
-    const response = staticNodes(NETWORK_DIR)
-    res.status(200).send({ Reply: response })
-
-})
 
 const staticNodes = (network_name) => {
     
@@ -482,3 +265,214 @@ const staticNodes = (network_name) => {
 
     return props
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////// ENDPOINTS //////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// I'm the network
+router.get("/", (req, res) => {
+    res.send("I'm the network");
+})
+
+// Create the network with 1 node in one endpoint
+router.post("/createNetwork/:network", (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NODE_NUMBER = 1
+    //const FAUCET_ADDRESS = parseInt(req.params.address)    
+    //const FAUCET_ADDRESS = req.body.address
+
+    //CREATE BOOT NODE --> Not needed for V1
+    //const bootnode = createBootNode()
+
+    //Initialize parameters 
+    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+
+    //Initialize directory
+    if (fs.existsSync(params.NETWORK_DIR)) {
+        console.log("Directory Exists");
+        deleteNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
+    }
+    createNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
+
+    //createAddress
+    const signer_address = createAddress(params.DIR_NODE, params.NODE)
+    //res.status(200).send({ signer_address: signer_address });
+
+
+    //create Allocated Addresses
+    const alloc_addresses = [
+        signer_address,
+        FAUCET_ADDRESS
+    ]
+
+    //create genesis state from genesis_template
+    const genesis_file = generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
+    //res.status(200).send({ genesis_file: genesis_file});
+
+
+    //initialize nodeDB
+    const initnodeDB = initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
+    delay(2000)
+    //res.status(200).send({initnodeDB: initnodeDB.toString()});
+
+    //signer_address = 'b6da28fee3e0cb52df1fe72a74b271b3bc385d38'
+    //start container_node
+    const goNode = startNode(params, signer_address)
+    res.status(200).send({ goNode: goNode.toString() });
+})
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// I'm the network
+router.get("/", (req, res) => {
+    res.send("I'm the network");
+})
+
+// Create the network with 1 node in three endpoint
+
+// Create an address
+router.post("/createAddress/:network", async (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NODE_NUMBER = 1
+
+    //Initialize parameters 
+    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+
+    //Initialize directory
+    if (fs.existsSync(params.NETWORK_DIR)) {
+        console.log("Directory Exists");
+        deleteNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
+    }
+    createNodeDirectory(params.NETWORK_DIR, params.DIR_NODE)
+
+    //createAddress
+    const signer_address = createAddress(params.DIR_NODE, params.NODE)
+    res.status(200).send({ signer_address: signer_address });
+
+})
+
+// Create the node DB
+router.post("/createNodeDB/:network", async (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NODE_NUMBER = 1
+    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+    const signer_address = await getSignerForNode(params.DIR_NODE.toString());
+    //create Allocated Addresses
+    const alloc_addresses = [
+        signer_address,
+        FAUCET_ADDRESS
+    ]
+
+    //create genesis state from genesis_template
+    const genesis_file = await generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
+    //exit
+    //res.status(200).send({ genesis_file: genesis_file});
+    const initNode = await initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
+
+    //update/create static-nodes.json
+    const sn_type = 'create'
+    //const staticNodes = staticNodes(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
+
+    res.status(200).send({ initNode: initNode.toString() });
+})
+
+// Create the static-nodes.json
+router.get("/staticNode/:network", async (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NETWORK_DIR = `net${NETWORK_NUMBER}`
+    // const NODE_NUMBER = 1
+    // const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+    // console.log("params: ", params);
+    const response = staticNodes(NETWORK_DIR)
+    res.status(200).send({ Reply: response })
+
+})
+
+// Create the node container
+router.post("/createNodeContainer/:network", async (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NODE_NUMBER = 1
+    const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+    const signer_address = await getSignerForNode(params.DIR_NODE.toString());
+    console.log({signer_address: signer_address});
+    const goNode = await startNode(params, signer_address)
+    res.status(200).send({ goNode: goNode.toString() });
+})
+
+// // TEMP Create the node
+// router.post("/createContainer/:network", async (req, res) => {
+//     const NETWORK_NUMBER = parseInt(req.params.network)
+//     const NODE_NUMBER = 1
+//     const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+//     const signer_address = await getSignerForNode(req.params.network);
+//     const goNode = await startNode(params, signer_address)
+//     res.status(200).send({goNode: goNode.toString()});
+// })
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// Delete the Network
+router.delete("/deleteNetwork/:network", (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NETWORK_DIR = `net${NETWORK_NUMBER}`
+    const INT_NODE = 1
+    const NODE = `${NETWORK_DIR}nodo${INT_NODE}`
+
+    const nodos = fs.readdirSync(NETWORK_DIR, { withFileTypes: true })
+        .filter(i => !i.isFile())
+    
+        console.log(nodos);
+    
+    //Go through node list and remove node container
+    nodos.forEach(i => {
+        //stop node
+        const docker_remove_network = `docker rm -f ${i.name}`
+        const result = execSync(docker_remove_network, (error, stdout, stderr) => {
+            console.log("borrando")
+            if (error) {
+                res.send({ error })
+                return
+            }
+        })
+    })
+
+
+    //execSync(docker_remove_network)
+
+    //remove all network files
+    fs.rmSync(NETWORK_DIR, { recursive: true }, (err) => {
+        if (err) {
+            // File deletion failed
+            console.error(err.message);
+            console.log("Nothing to Delete");
+            return;
+        }
+        console.log("Deleted successfully");
+    })
+    res.status(200).send({ NetworkRemoved: "OK" });
+
+})
+
+
+//  Listamos las redes activas.
+router.get('/listAll', (req, res) => {
+    docker.container.list()
+        .then((containers) => {
+            const mapeado = containers.map((e) => {
+                return {
+                    id: e.data.Id,
+                    name: e.data.Names[0]
+                }
+            });
+            res.send(mapeado);
+        }).catch((e) => res.status(500).send({ res: e.message }))
+});
+
+
+
+
