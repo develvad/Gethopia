@@ -7,7 +7,7 @@ const cors = require('cors')
 
 router.use(cors())
 
-const web3 = new Web3("http://localhost:8545")
+const web3 = new Web3("http://localhost:8566")
 // const web3 = new Web3("https://mainnet.infura.io/v3/20b55e65c65649c686d7abc8e4853f0b")
 
 router.get("/saldo/:cuenta", async (req, res) =>{
@@ -21,7 +21,7 @@ router.get("/enviar/:cuenta", async (req, res) =>{
     //Crear y firmar tx de ETH
     const tx = await web3.eth.accounts.signTransaction({
         to: req.params.cuenta,
-        from: process.env.ADDRESS,
+        from: '0x' + process.env.ADDRESS,
         value: 10E18, //10 ETH en GWEI
         gas: 2000000 //en GWEI
     }, '0x' + process.env.PRIVATE_KEY)
