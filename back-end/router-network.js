@@ -89,8 +89,8 @@ function deleteNodeDirectory(network_path, node_path) {
 function createAddress(node_path, node_name) {
 
     // Init first node to with genesis state and initiallize DB
-    //const docker_createAddress = `docker run --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
-    const docker_createAddress = 'docker run --rm -v ' + path.join(__dirname, node_path) + `:/${node_name} -v ` + path.join(__dirname, 'pwd.txt') + `/:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
+    const docker_createAddress = `docker run --rm -v $(pwd)/${node_path}:/${node_name} -v $(pwd)/pwd.txt:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
+    //const docker_createAddress = 'docker run --rm -v ' + path.join(__dirname, node_path) + `:/${node_name} -v ` + path.join(__dirname, 'pwd.txt') + `/:/pwd.txt --name account_creator ethereum/client-go --datadir ${node_name}  account new --password /pwd.txt`
     execSync(docker_createAddress)
 
     //const lista = fs.readdirSync(`${node_path}/keystore`)

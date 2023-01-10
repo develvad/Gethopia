@@ -10,7 +10,7 @@ POST http://localhost:3000/network/createNetwork/1
 Content-Type: application/json 
 
 ###
-DELETE http://localhost:3000/network/deleteNetwork/1
+DELETE http://localhost:3000/network/deleteNetwork/5
 Content-Type: application/json 
 
 ###
