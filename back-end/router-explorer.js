@@ -6,7 +6,7 @@ const cors = require('cors')
 
 router.use(cors())
 
-const URL_NODO = "http://localhost:8646"
+const URL_NODO = "http://localhost:8566"
 //const URL_INFURA = "https://mainnet.infura.io/v3/20b55e65c65649c686d7abc8e4853f0b"
 
 // const web3 = new Web3(URL_NODO)

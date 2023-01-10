@@ -13,7 +13,7 @@ const { exit } = require("node:process");
 module.exports = router
 
 const BALANCE = "0x200000000000000000000000000000000000000000000000000000000000000"
-const FAUCET_ADDRESS = "A9c13244c9e66Ca2a061C500447C06b2698B7aE2"
+const FAUCET_ADDRESS = "9E5CC5E873e31C45779b15974c6F57e365a94C99"
 //const MICUENTA = "704765a908962e25626f2bea8cdf96c84dedaa0b"
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
@@ -348,7 +348,7 @@ router.post("/createNodeDB/:network", async (req, res) => {
 
     //create genesis state from genesis_template
     const genesis_file = await generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
-    exit
+    //exit
     //res.status(200).send({ genesis_file: genesis_file});
     const initNode = await initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
 
@@ -446,8 +446,8 @@ const staticNodes = (network_name) => {
     const props = nodos.map((i, index) => {
         // docker run --rm -v $(pwd)/nodo1:/nodo1 ethereum/client-go:alltools-latest bootnode --nodekey /nodo1/geth/nodekey -writeaddress
 
-        const docker_nodeKey = 'docker run --rm -v ' + path.join(__dirname) + `/${network_name}/${i.name}` + `:/${i.name} --name nodeKey ethereum/client-go:alltools-latest bootnode --nodekey ${i.name}/geth/nodekey -writeaddress`
-        // const docker_nodeKey = 'docker run --rm -v $(pwd)' + `/${network_name}/${i.name}` + `:/${i.name} --name nodeKey ethereum/client-go:alltools-latest bootnode --nodekey ${i.name}/geth/nodekey -writeaddress`
+        //const docker_nodeKey = 'docker run --rm -v ' + path.join(__dirname) + `/${network_name}/${i.name}` + `:/${i.name} --name nodeKey ethereum/client-go:alltools-latest bootnode --nodekey ${i.name}/geth/nodekey -writeaddress`
+        const docker_nodeKey = 'docker run --rm -v $(pwd)' + `/${network_name}/${i.name}` + `:/${i.name} --name nodeKey ethereum/client-go:alltools-latest bootnode --nodekey ${i.name}/geth/nodekey -writeaddress`
         //const docker_nodeKey = 'docker run --rm -v $(pwd)/net11/net11nodo1:/nodo1 ethereum/client-go:alltools-latest bootnode --nodekey /nodo1/geth/nodekey -writeaddress'
         const result = execSync(docker_nodeKey)
         const decrypted_nodekey = result.toString().substring(0,result.toString().length - 1)        
