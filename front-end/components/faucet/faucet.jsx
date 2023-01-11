@@ -1,15 +1,18 @@
-import { useEffect } from 'react'
-import { useState } from 'react'
+import {useEffect, useState, useContext} from "react";
 const {ethereum} = window
+import { Contexto } from '../../src/App'
 
 const Faucet = () => {
+    const [estado, setEstado] = useContext(Contexto)
+    const [redActiva, setredActiva] = useState(estado.redActiva);
 
     const [cuenta, setCuenta] = useState(null)
     const [saldo, setSaldo] = useState("")
     const [isLoading, setIsLoading] = useState(false)
   
     async function getSaldo(cuenta){ 
-      const respuesta = await fetch(`http://localhost:3000/faucet/saldo/${cuenta}`)
+      // const respuesta = await fetch(`http://localhost:3000/faucet/saldo/${cuenta}`)
+      const respuesta = await fetch(`http://localhost:3000/faucet/${redActiva}/saldo/${cuenta}`)
       if (respuesta.status == "200"){
         const datos = await respuesta.json() 
         setSaldo(datos)
@@ -18,7 +21,8 @@ const Faucet = () => {
     
     async function enviarETH(){   
       setIsLoading(true)
-      const respuesta = await fetch(`http://localhost:3000/faucet/enviar/${cuenta}`)
+      // const respuesta = await fetch(`http://localhost:3000/faucet/enviar/${cuenta}`)
+      const respuesta = await fetch(`http://localhost:3000/faucet/${redActiva}/enviar/${cuenta}`)
       if (respuesta.status == "200"){
         const datos = await respuesta.json() 
         await getSaldo(cuenta)
