@@ -3,8 +3,8 @@ const {ethereum} = window
 import { Contexto } from '../../src/App'
 
 const Faucet = () => {
-    const [estado, setEstado] = useContext(Contexto)
-    const [redActiva, setredActiva] = useState(estado.redActiva);
+    const [estado] = useContext(Contexto)
+    const [redActiva] = useState(estado.redActiva);
 
     const [cuenta, setCuenta] = useState(null)
     const [saldo, setSaldo] = useState("")

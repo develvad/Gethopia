@@ -1,6 +1,7 @@
 import { Outlet, useNavigate } from "react-router-dom"
 import { useForm } from 'react-hook-form'
 import {useEffect, useState, useContext} from "react";
+import axios from "axios";
 // import { Contexto } from '../../src/main'
 import { Contexto } from '../../src/App'
 
@@ -57,8 +58,9 @@ const Explorador = () => {
     } ,[redActiva]);
 
     function alCambiar(redSeleccionada) {
+        console.warn(redSeleccionada);
         setredActiva(redSeleccionada)
-        // setEstado({ ...estado, redActiva: redActiva })
+        // setEstado(redSeleccionada)
         // console.log('redActiva '+ redActiva)
         // console.log('redSeleccionada '+ redSeleccionada)
         // console.log('estado.redActiva '+estado.redActiva)
@@ -73,6 +75,7 @@ const Explorador = () => {
             <form className='d-flex gap-1 my-2 mx-2' onSubmit={handleSubmit(introducirInfo)}>
                 {/* <select style={{color:"#B7C46E"}} className='btn btn-icon-label btn-accent-2' onChange={(e) => setredActiva(e.target.value.slice(4))}> */}
                 <select style={{color:"#B7C46E"}} className='btn btn-icon-label btn-accent-2' onChange={(e) => alCambiar(e.target.value.slice(4))}>
+                    <option defaultValue>Escoger Red</option>
                     {
                         redes.map((numRed) => <option key={numRed}>Red {numRed}</option>)
                     }
