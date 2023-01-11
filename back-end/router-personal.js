@@ -6,7 +6,7 @@ const cors = require('cors')
 
 router.use(cors())
 
-const web3 = new Web3("http://localhost:8646")
+const web3 = new Web3("http://localhost:8566")
 //const web3 = new Web3("https://mainnet.infura.io/v3/20b55e65c65649c686d7abc8e4853f0b")
 
 router.get("/saldo/:cuenta", async (req, res) =>{

@@ -7,7 +7,7 @@ import { Contexto } from '../../src/App'
 const Explorador = () => {
     const [estado, setEstado] = useContext(Contexto)
 
-    const {register, handleSubmit} = useForm()
+    const { register, handleSubmit } = useForm()
     const navegar = useNavigate()
     const introducirInfo = (datos) => {
         // if(datos.datosForm.length == 66) // Si la longitud es 66 navegamos a tx
@@ -31,13 +31,24 @@ const Explorador = () => {
     // const [estado, setEstado] = useContext(Contexto)
     const [redActiva, setredActiva] = useState(estado.redActiva);
     const getRedes = async () => {
-        // const sitesFromBack = await axios.get('http://localhost:3000/network/listAll');
-        // console.log(sitesFromBack.data);
-        // setRedes(sitesFromBack.data);
-        setRedes([1,2,3]);
-    }    
+        const sitesFromBack = await axios.get('http://localhost:3000/network/listAll');
+        console.log(sitesFromBack.data);
+        let tempArr = [];
 
-    useEffect( () => {
+        sitesFromBack.data.forEach((i) => {
+            let tempObj = {};
+            tempObj = i.name.substring(i.name.indexOf("net") + 3, i.name.indexOf("nodo"))
+            tempArr.push(parseInt(tempObj)); 
+        })
+
+        let arr = tempArr.filter( (value, index, self) => {
+            return self.indexOf(value) === index
+        })
+        console.log(arr.sort());
+        
+        setRedes(arr.sort());
+    }
+    useEffect(() => {
         getRedes();
     } ,[]);
 
@@ -53,12 +64,12 @@ const Explorador = () => {
         // console.log('estado.redActiva '+estado.redActiva)
     }
 
-    return( 
-    <main>
-        <header className="dash-titlebar">
-            <h3>Explorador de redes locales</h3>
-        </header>
-        
+    return (
+        <main>
+            <header className="dash-titlebar">
+                <h3>Explorador de redes locales</h3>
+            </header>
+
             <form className='d-flex gap-1 my-2 mx-2' onSubmit={handleSubmit(introducirInfo)}>
                 {/* <select style={{color:"#B7C46E"}} className='btn btn-icon-label btn-accent-2' onChange={(e) => setredActiva(e.target.value.slice(4))}> */}
                 <select style={{color:"#B7C46E"}} className='btn btn-icon-label btn-accent-2' onChange={(e) => alCambiar(e.target.value.slice(4))}>
@@ -67,12 +78,12 @@ const Explorador = () => {
                     }
                 </select>
                 <input className="mx-1" {...register('datosForm')} size={100} placeholder=" Introduzca hash, número de bloque o cuenta"></input>
-                <button style={{color:"#B7C46E"}} className='btn btn-icon-label btn-accent-2'>Buscar</button>
+                <button style={{ color: "#B7C46E" }} className='btn btn-icon-label btn-accent-2'>Buscar</button>
             </form>
             <div className="border my-3 p-2">
                 <Outlet></Outlet>
             </div>
-</main>
+        </main>
     )
 }
 

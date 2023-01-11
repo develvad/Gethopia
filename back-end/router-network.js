@@ -13,7 +13,7 @@ const { exit } = require("node:process");
 module.exports = router
 
 const BALANCE = "0x200000000000000000000000000000000000000000000000000000000000000"
-const FAUCET_ADDRESS = "A9c13244c9e66Ca2a061C500447C06b2698B7aE2"
+const FAUCET_ADDRESS = "9E5CC5E873e31C45779b15974c6F57e365a94C99"
 //const MICUENTA = "704765a908962e25626f2bea8cdf96c84dedaa0b"
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
@@ -123,36 +123,6 @@ async function generateGenesis(chain_id, signer_address, alloc_addresses, networ
     return final_genesis
 }
 
-// const generateGenesis = async (chain_id, signer_address, alloc_addresses, network_path) => {
-//     return new Promise((resolve, reject) => {
-//         fs.readdir(path.join(__dirname),
-//             (err, files) => {
-//                 if (err) {
-//                     console.log('ERR READ_DIR_GENESIS_TEMPLATE: ', err);
-//                     reject(err);
-//                 }
-//                 // leemos la plantilla del genesis
-//                 let genesis = JSON.parse(fs.readFileSync('genesis_template.json').toString())
-
-//                 // genesis.timestamp = `0x${timestamp}`
-//                 genesis.config.chainId = chain_id
-//                 genesis.extraData = `0x${'0'.repeat(64)}${signer_address}${'0'.repeat(130)}`
-
-
-//                 genesis.alloc = alloc_addresses.reduce((acc, item) => {
-//                     acc[item] = { balance: BALANCE }
-//                     return acc
-//                 }, {})
-
-
-//                 fs.writeFileSync(`${network_path}/genesis.json`, JSON.stringify(genesis))
-
-//                 const final_genesis = JSON.parse(fs.readFileSync(`${network_path}/genesis.json`).toString())
-//                 resolve(final_genesis)
-//             });
-//     });
-// }
-
 
 function initNodeDB(node_path, node_name, network_name) {
 
@@ -231,7 +201,81 @@ async function startNode(params, signer_address) {
     return result2
 }
 
-// Create the network
+// Primero automatizamos el proceso de coger el signer address
+const getSignerForNode = async (nodepath) => {
+    return new Promise((resolve, reject) => {
+        fs.readdir(path.join(__dirname, nodepath) + '/keystore',
+            (err, files) => {
+                if (err) {
+                    console.log('ERR GET_SIGNER_FOR_NODE: ', err);
+                    reject(err);
+                }
+                const data = fs.readFileSync(path.join(__dirname, nodepath) + '/keystore/' + files[0], 'utf8');
+                const { address } = JSON.parse(data);
+                resolve(address)
+            });
+    });
+}
+
+const staticNodes = (network_name) => {
+    
+    const nodos = fs.readdirSync(network_name, { withFileTypes: true })
+        .filter(i => !i.isFile())
+
+    //if more than 100 nodes will need to add another if
+    //((index+1)>10) ? i.name.slice(-2): i.name.slice(-1) will check to keep last position or last two
+    //as long as network name is 3 letters following calc will work
+    //parseInt(network_name.substr(3,network_name.length - 3)*20)
+    const props = nodos.map((i, index) => {
+        // docker run --rm -v $(pwd)/nodo1:/nodo1 ethereum/client-go:alltools-latest bootnode --nodekey /nodo1/geth/nodekey -writeaddress
+
+        //const docker_nodeKey = 'docker run --rm -v ' + path.join(__dirname) + `/${network_name}/${i.name}` + `:/${i.name} --name nodeKey ethereum/client-go:alltools-latest bootnode --nodekey ${i.name}/geth/nodekey -writeaddress`
+        const docker_nodeKey = 'docker run --rm -v $(pwd)' + `/${network_name}/${i.name}` + `:/${i.name} --name nodeKey ethereum/client-go:alltools-latest bootnode --nodekey ${i.name}/geth/nodekey -writeaddress`
+        //const docker_nodeKey = 'docker run --rm -v $(pwd)/net11/net11nodo1:/nodo1 ethereum/client-go:alltools-latest bootnode --nodekey /nodo1/geth/nodekey -writeaddress'
+        const result = execSync(docker_nodeKey)
+        const decrypted_nodekey = result.toString().substring(0,result.toString().length - 1)        
+
+        return ({
+            network: network_name,
+            name: i.name,
+            //docker_command: docker_nodeKey,
+            //docker_result: result,
+            port: (30303 + parseInt(((index + 1) > 10) ? i.name.slice(-2) : i.name.slice(-1)) + parseInt(network_name.substr(3, network_name.length - 3) * 20)).toString(),
+            // port: (30303 + parseInt(i.name.slice(-1)) + parseInt(network_name.slice(-1))).toString(),
+            nodekey: fs.readFileSync(`${network_name}/${i.name}/geth/nodekey`).toString(),
+            decrypted_nodekey: decrypted_nodekey
+        })
+    })
+    //console.log(props);
+
+    //Create static-nodes.json
+    const staticNodes = props.map(i => `enode://${i.decrypted_nodekey}@${i.name}:${i.port}?discport=0`)
+    //const staticNodes = props.map(i => `enode://${i.decrypted_nodekey}@${i.name}:${i.port}`)
+    console.log(staticNodes);
+
+    //Check if static-nodes.json file exists and delete for each node + create new static-nodes.json
+    props.forEach(i => {
+        if (fs.existsSync(path.join(__dirname, i.network) + "/" + i.name + "/static-nodes.json")) {
+            console.log("static-nodes.json exists");
+            fs.unlinkSync(path.join(__dirname, i.network) + "/" + i.name + "/static-nodes.json")
+            console.log(i.name, " static-nodes.json deleted");
+        }
+        fs.writeFileSync(path.join(__dirname, i.network) + "/" + i.name + "/static-nodes.json", JSON.stringify(staticNodes))
+    })
+
+    return props
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////// ENDPOINTS //////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// I'm the network
+router.get("/", (req, res) => {
+    res.send("I'm the network");
+})
+
+// Create the network with 1 node in one endpoint
 router.post("/createNetwork/:network", (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
     const NODE_NUMBER = 1
@@ -278,42 +322,18 @@ router.post("/createNetwork/:network", (req, res) => {
     res.status(200).send({ goNode: goNode.toString() });
 })
 
-// Delete the Network
-router.delete("/deleteNetwork/:network", (req, res) => {
-    const NETWORK_NUMBER = parseInt(req.params.network)
-    const NETWORK_DIR = `net${NETWORK_NUMBER}`
-    const INT_NODE = 1
-    const NODE = `${NETWORK_DIR}nodo${INT_NODE}`
 
-    //stop node
-    const docker_remove_network = `docker rm -f ${NODE}`
-    const result = exec(docker_remove_network, (error, stdout, stderr) => {
-        console.log("borrando")
-        if (error) {
-            res.send({ error })
-            return
-        }
-    })
-    //execSync(docker_remove_network)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    //remove all network files
-    fs.rmSync(NETWORK_DIR, { recursive: true }, (err) => {
-        if (err) {
-            // File deletion failed
-            console.error(err.message);
-            console.log("Nothing to Delete");
-            return;
-        }
-        console.log("Deleted successfully");
-    })
-    res.status(200).send({ NetworkRemoved: "OK" });
-
+// I'm the network
+router.get("/", (req, res) => {
+    res.send("I'm the network");
 })
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Create the network with 1 node in three endpoint
 
-// TEMP Create an address
+// Create an address
 router.post("/createAddress/:network", async (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
     const NODE_NUMBER = 1
@@ -334,7 +354,7 @@ router.post("/createAddress/:network", async (req, res) => {
 
 })
 
-// TEMP Create the node
+// Create the node DB
 router.post("/createNodeDB/:network", async (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
     const NODE_NUMBER = 1
@@ -348,7 +368,7 @@ router.post("/createNodeDB/:network", async (req, res) => {
 
     //create genesis state from genesis_template
     const genesis_file = await generateGenesis(params.NETWORK_CHAINID, signer_address, alloc_addresses, params.NETWORK_DIR)
-    exit
+    //exit
     //res.status(200).send({ genesis_file: genesis_file});
     const initNode = await initNodeDB(params.DIR_NODE, params.NODE, params.NETWORK_DIR)
 
@@ -359,10 +379,19 @@ router.post("/createNodeDB/:network", async (req, res) => {
     res.status(200).send({ initNode: initNode.toString() });
 })
 
+// Create the static-nodes.json
+router.get("/staticNode/:network", async (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NETWORK_DIR = `net${NETWORK_NUMBER}`
+    // const NODE_NUMBER = 1
+    // const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
+    // console.log("params: ", params);
+    const response = staticNodes(NETWORK_DIR)
+    res.status(200).send({ Reply: response })
 
+})
 
-
-// TEMP Create the node
+// Create the node container
 router.post("/createNodeContainer/:network", async (req, res) => {
     const NETWORK_NUMBER = parseInt(req.params.network)
     const NODE_NUMBER = 1
@@ -372,11 +401,6 @@ router.post("/createNodeContainer/:network", async (req, res) => {
     const goNode = await startNode(params, signer_address)
     res.status(200).send({ goNode: goNode.toString() });
 })
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 
 // // TEMP Create the node
 // router.post("/createContainer/:network", async (req, res) => {
@@ -388,26 +412,52 @@ router.post("/createNodeContainer/:network", async (req, res) => {
 //     res.status(200).send({goNode: goNode.toString()});
 // })
 
-// I'm the network
-router.get("/", (req, res) => {
-    res.send("I'm the network");
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// Delete the Network
+router.delete("/deleteNetwork/:network", (req, res) => {
+    const NETWORK_NUMBER = parseInt(req.params.network)
+    const NETWORK_DIR = `net${NETWORK_NUMBER}`
+    const INT_NODE = 1
+    const NODE = `${NETWORK_DIR}nodo${INT_NODE}`
+
+    const nodos = fs.readdirSync(NETWORK_DIR, { withFileTypes: true })
+        .filter(i => !i.isFile())
+    
+        console.log(nodos);
+    
+    //Go through node list and remove node container
+    nodos.forEach(i => {
+        //stop node
+        const docker_remove_network = `docker rm -f ${i.name}`
+        const result = execSync(docker_remove_network, (error, stdout, stderr) => {
+            console.log("borrando")
+            if (error) {
+                res.send({ error })
+                return
+            }
+        })
+    })
+
+
+    //execSync(docker_remove_network)
+
+    //remove all network files
+    fs.rmSync(NETWORK_DIR, { recursive: true }, (err) => {
+        if (err) {
+            // File deletion failed
+            console.error(err.message);
+            console.log("Nothing to Delete");
+            return;
+        }
+        console.log("Deleted successfully");
+    })
+    res.status(200).send({ NetworkRemoved: "OK" });
+
 })
 
-// Primero automatizamos el proceso de coger el signer address
-const getSignerForNode = async (nodepath) => {
-    return new Promise((resolve, reject) => {
-        fs.readdir(path.join(__dirname, nodepath) + '/keystore',
-            (err, files) => {
-                if (err) {
-                    console.log('ERR GET_SIGNER_FOR_NODE: ', err);
-                    reject(err);
-                }
-                const data = fs.readFileSync(path.join(__dirname, nodepath) + '/keystore/' + files[0], 'utf8');
-                const { address } = JSON.parse(data);
-                resolve(address)
-            });
-    });
-}
 
 //  Listamos las redes activas.
 router.get('/listAll', (req, res) => {
@@ -423,62 +473,6 @@ router.get('/listAll', (req, res) => {
         }).catch((e) => res.status(500).send({ res: e.message }))
 });
 
-router.get("/staticNode/:network", async (req, res) => {
-    const NETWORK_NUMBER = parseInt(req.params.network)
-    const NETWORK_DIR = `net${NETWORK_NUMBER}`
-    // const NODE_NUMBER = 1
-    // const params = createParams(NETWORK_NUMBER, NODE_NUMBER)
-    // console.log("params: ", params);
-    const response = staticNodes(NETWORK_DIR)
-    res.status(200).send({ Reply: response })
 
-})
 
-const staticNodes = (network_name) => {
-    
-    const nodos = fs.readdirSync(network_name, { withFileTypes: true })
-        .filter(i => !i.isFile())
 
-    //if more than 100 nodes will need to add another if
-    //((index+1)>10) ? i.name.slice(-2): i.name.slice(-1) will check to keep last position or last two
-    //as long as network name is 3 letters following calc will work
-    //parseInt(network_name.substr(3,network_name.length - 3)*20)
-    const props = nodos.map((i, index) => {
-        // docker run --rm -v $(pwd)/nodo1:/nodo1 ethereum/client-go:alltools-latest bootnode --nodekey /nodo1/geth/nodekey -writeaddress
-
-        const docker_nodeKey = 'docker run --rm -v ' + path.join(__dirname) + `/${network_name}/${i.name}` + `:/${i.name} --name nodeKey ethereum/client-go:alltools-latest bootnode --nodekey ${i.name}/geth/nodekey -writeaddress`
-        // const docker_nodeKey = 'docker run --rm -v $(pwd)' + `/${network_name}/${i.name}` + `:/${i.name} --name nodeKey ethereum/client-go:alltools-latest bootnode --nodekey ${i.name}/geth/nodekey -writeaddress`
-        //const docker_nodeKey = 'docker run --rm -v $(pwd)/net11/net11nodo1:/nodo1 ethereum/client-go:alltools-latest bootnode --nodekey /nodo1/geth/nodekey -writeaddress'
-        const result = execSync(docker_nodeKey)
-        const decrypted_nodekey = result.toString().substring(0,result.toString().length - 1)        
-
-        return ({
-            network: network_name,
-            name: i.name,
-            //docker_command: docker_nodeKey,
-            //docker_result: result,
-            port: (30303 + parseInt(((index + 1) > 10) ? i.name.slice(-2) : i.name.slice(-1)) + parseInt(network_name.substr(3, network_name.length - 3) * 20)).toString(),
-            // port: (30303 + parseInt(i.name.slice(-1)) + parseInt(network_name.slice(-1))).toString(),
-            nodekey: fs.readFileSync(`${network_name}/${i.name}/geth/nodekey`).toString(),
-            decrypted_nodekey: decrypted_nodekey
-        })
-    })
-    //console.log(props);
-
-    //Create static-nodes.json
-    const staticNodes = props.map(i => `enode://${i.decrypted_nodekey}@${i.name}:${i.port}?discport=0`)
-    //const staticNodes = props.map(i => `enode://${i.decrypted_nodekey}@${i.name}:${i.port}`)
-    console.log(staticNodes);
-
-    //Check if static-nodes.json file exists and delete for each node + create new static-nodes.json
-    props.forEach(i => {
-        if (fs.existsSync(path.join(__dirname, i.network) + "/" + i.name + "/static-nodes.json")) {
-            console.log("static-nodes.json exists");
-            fs.unlinkSync(path.join(__dirname, i.network) + "/" + i.name + "/static-nodes.json")
-            console.log(i.name, " static-nodes.json deleted");
-        }
-        fs.writeFileSync(path.join(__dirname, i.network) + "/" + i.name + "/static-nodes.json", JSON.stringify(staticNodes))
-    })
-
-    return props
-}
