@@ -16,12 +16,13 @@ const Explorador = () => {
         //     navegar(`saldo/${datos.datosForm}`)
         // if(/^\d+\.?\d*$/.test(datos.datosForm)) //Si el dato es un número navegamos a bloque
         //     navegar(`bloque/${datos.datosForm}`)
+        console.log(datos)
         if(datos.datosForm.length == 66) // Si la longitud es 66 navegamos a tx
-            navegar(estado.redActiva + `/tx/${datos.datosForm}`)
+            navegar(redActiva + `/tx/${datos.datosForm}`)
         if(datos.datosForm.length == 42) // Si la longitud es 42 navegamos a saldo
-            navegar(estado.redActiva + `/saldo/${datos.datosForm}`)
+            navegar(redActiva + `/saldo/${datos.datosForm}`)
         if(/^\d+\.?\d*$/.test(datos.datosForm)) //Si el dato es un número navegamos a bloque
-            navegar(estado.redActiva + `/bloque/${datos.datosForm}`)
+            navegar(redActiva + `/bloque/${datos.datosForm}`)
 
     }
 
@@ -40,12 +41,16 @@ const Explorador = () => {
         getRedes();
     } ,[]);
 
+    useEffect( () => {
+        setEstado({ ...estado, redActiva: redActiva })
+    } ,[redActiva]);
+
     function alCambiar(redSeleccionada) {
         setredActiva(redSeleccionada)
-        setEstado({ ...estado, redActiva: redActiva })
-        console.log('redActiva '+redActiva)
-        console.log('redSeleccionada '+ redSeleccionada)
-        console.log('estado.redActiva '+estado.redActiva)
+        // setEstado({ ...estado, redActiva: redActiva })
+        // console.log('redActiva '+ redActiva)
+        // console.log('redSeleccionada '+ redSeleccionada)
+        // console.log('estado.redActiva '+estado.redActiva)
     }
 
     return( 

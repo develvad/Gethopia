@@ -8,8 +8,8 @@ export default function Tx() {
     // const {data, isLoading, error} = useQuery(['tx', params.hashTx], getTx)
 
     const {redActiva, hashTx} = useParams()
-    const { data, isLoading, error } = useQuery("numBloque", () => {
-        return fetch(`http://localhost:3000/explorer/${redActiva}/bloque/${hashTx}`).then(res => res.json())
+    const { data, isLoading, error } = useQuery(['hashTx', hashTx], () => {
+        return fetch(`http://localhost:3000/explorer/${redActiva}/tx/${hashTx}`).then(res => res.json())
     })
 
     if(isLoading) 
@@ -25,19 +25,19 @@ export default function Tx() {
                 <tr>
                     <th>Bloque</th>
                     <td>
-                       <Link to={`/explorador/bloque/${data.blockNumber}`}>{data.blockNumber}</Link> 
+                       <Link to={`/explorador/${redActiva}/bloque/${data.blockNumber}`}>{data.blockNumber}</Link> 
                     </td>
                 </tr>
                 <tr>
                     <th>Desde</th>
                     <td>
-                       <Link to={`/explorador/saldo/${data.from}`}>{data.from}</Link> 
+                       <Link to={`/explorador/${redActiva}/saldo/${data.from}`}>{data.from}</Link> 
                     </td>
                 </tr>
                 <tr>
                     <th>A</th>
                     <td>
-                       <Link to={`/explorador/saldo/${data.to}`}>{data.to}</Link> 
+                       <Link to={`/explorador/${redActiva}/saldo/${data.to}`}>{data.to}</Link> 
                     </td>
                 </tr>
                 <tr>

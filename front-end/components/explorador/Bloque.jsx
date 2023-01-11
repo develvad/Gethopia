@@ -6,14 +6,14 @@ import { Link } from 'react-router-dom'
 export default function Bloque() {
 
     const {redActiva, numBloque} = useParams()
-    // const {data, isLoading, error} = useQuery(['numBloque', params.numBloque], getTx)
-    // const {data, isLoading, error} = useQuery(['redBloque', redBloque], getTx)
+    // const {data, isLoading, error} = useQuery(['numBloque', params.numBloque], getBloque)
+    // const {data, isLoading, error} = useQuery(['numBloque', numBloque], getBloque)
+    // const {data, isLoading, error} = useQuery(['redBloque', redBloque], getBloque)
     // const {data, isLoading, error} = useQuery(['numBloque', numBloque,'redActiva', redActiva], getBloque)
 
-    const { data, isLoading, error } = useQuery("numBloque", () => {
+    const { data, isLoading, error } = useQuery(['numBloque', numBloque], () => {
         return fetch(`http://localhost:3000/explorer/${redActiva}/bloque/${numBloque}`).then(res => res.json())
     })
-
 
     if(isLoading) 
         return <h1>Cargando...</h1>

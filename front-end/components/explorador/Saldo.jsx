@@ -7,8 +7,8 @@ export default function Saldo() {
     // const {data, isLoading, error} = useQuery(['dir', params.dir], getSaldo)
     
     const {redActiva, dir} = useParams()
-    const { data, isLoading, error } = useQuery("numBloque", () => {
-        return fetch(`http://localhost:3000/explorer/${redActiva}/bloque/${dir}`).then(res => res.json())
+    const { data, isLoading, error } = useQuery(['dir', dir], () => {
+        return fetch(`http://localhost:3000/explorer/${redActiva}/saldo/${dir}`).then(res => res.json())
     })
 
     if(isLoading) 

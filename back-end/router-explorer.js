@@ -22,6 +22,7 @@ router.get("/:redActiva", async (req,res) => {
 })
 
 router.get("/:redActiva/bloque/:numBloque", async (req,res) => {
+// router.get("/bloque/:numBloque", async (req,res) => {
     try{
         const HTTP_PORT = 8545 + 1 + (req.params.redActiva * 20)
         const URL_NODO = "http://localhost:" + HTTP_PORT

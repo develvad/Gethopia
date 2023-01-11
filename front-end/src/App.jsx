@@ -32,7 +32,6 @@ function App() {
         <Contexto.Provider value={[estado, setEstado]}>
             <BrowserRouter>
                 <QueryClientProvider client={queryClient}>
-                  <p>{estado.redActiva}</p>
                   <div className="App">
                     <div className="dash" role="application">
                       <SideBar/>  
