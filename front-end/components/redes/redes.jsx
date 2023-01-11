@@ -8,7 +8,9 @@ const Redes = () => {
     const [sites, setSites] = useState([]);
     const [newSites, setNewSites] = useState([]);
     const [modalDisp, setModalDisp] = useState(false);
-    const [netSelected, setNetSelected] = useState({});
+    const [modalNodeDisp, setModalNodeDisp] = useState(false);
+    const [netSelected, setNetSelected] = useState('');
+    const [nodeSelected, setNodeSelected] = useState('1');
     const navigate = useNavigate();
 
     const getSites = async () => {
@@ -53,18 +55,34 @@ const Redes = () => {
         getSites();
     } ,[]);
 
-    const { isLoading, error, data, refetch } = useQuery(['newNet'] , async () => {
+    const { isLoading, error, data, refetch } = useQuery(['delNet'] , async () => {
         const resDelete = await axios.delete('http://localhost:3000/network/deleteNetwork/' + netSelected);
         return resDelete;
     }, {enabled: false});
 
+    const { isLoading: isLoadingNode, error: errorNode, data: dataNode, refetch: refetchNode } = useQuery(['delNode'] , async () => {
+        const resDelNode = await axios.delete('http://localhost:3000/node/deleteNode/' + netSelected + '/' + nodeSelected);
+        return resDelNode;
+    }, {enabled: false});
+
+
     const deleteNet = (net) => {
+        setModalNodeDisp(false);
         setModalDisp(true);
         setNetSelected(net.name[4]);
     }
 
+    const deleteNode = (node) => {
+        console.log(node);
+        setModalDisp(false);
+        setModalNodeDisp(true);
+        setNetSelected(node.netName.substring(node.netName.indexOf('net') + 3, node.netName.length));
+        setNodeSelected( nodeSelected.substring(nodeSelected.indexOf('nodo') + 4, nodeSelected.length));
+    }
+
     const closeModal = () => {
         setModalDisp(false);
+        setModalNodeDisp(false);
     }
 
     const deleteModalConfirm = () => {
@@ -75,6 +93,24 @@ const Redes = () => {
         setTimeout(() => {
             getSites();
         }, 1000);
+    }
+
+    const deleteModalNodeConfirm = () => {
+        closeModal();
+        console.log('Entro en, deleteModalNodeConfirm');
+        setTimeout(()=> {
+            refetchNode().then(() => {
+                setTimeout(() => {
+                    getSites();
+                }, 500);
+            })
+
+        }, 100)
+
+    }
+
+    const selectNode = (e) => {
+        setNodeSelected(e.target.value)
     }
 
     return (
@@ -110,11 +146,11 @@ const Redes = () => {
                                 <td><a href="#">{site.name.slice(1,5)}</a></td>
                                 <td>{ site.netName }</td>
                                 <td className="table-td-select">
-                                    <select className="form-control" id="example-select-2">
+                                    <select className="form-control" onChange={(e) => selectNode(e)} id="example-select-2">
                                         <option>nodo1</option>
                                         {
                                             site.child && site.child.map((child, i) => {
-                                                return <option key={i}>{ child.nodeName }</option>
+                                                return <option key={i} value={child.nodeName}>{ child.nodeName }</option>
                                             })
                                         }
 
@@ -130,8 +166,11 @@ const Redes = () => {
                                     <a href="#" onClick={() => navigate("/nuevonodo?red=" + site.netName[3] + '&nodo=' + parseInt(site.child.length + 2, 10) )} className="btn btn-icon btn-primary btn-sm mx-1 ">
                                         <span className="icon icon-xs fa fa-plus"></span>
                                     </a>
-                                    <a href="#" onClick={() => deleteNet(site)} className="btn btn-icon btn-danger btn-sm">
+                                    <a href="#" onClick={() => deleteNode(site)} className="btn btn-icon btn-accent-2 btn-sm ">
                                         <span className="icon icon-xs fa fa-trash"></span>
+                                    </a>
+                                    <a href="#" onClick={() => deleteNet(site)} className="btn btn-icon btn-danger btn-sm mx-1">
+                                        <span className=" fa-solid fa-x"></span>
                                     </a>
                                 </td>
                             </tr>)
@@ -143,16 +182,16 @@ const Redes = () => {
             <div>
                 <Outlet/>
             </div>
-            { isLoading &&
+            { isLoading || isLoadingNode &&
                 <>
                     <img src="/public/loading.svg"/>
                 </>
             }
             <div className="card" style={{width: "500px", margin: "0 auto", display: modalDisp ? 'block' : 'none' }}>
                 <div className="info__padding" >
-                    <h3>Borrar</h3>
+                    <h3>Borrar Red  { netSelected }</h3>
                     <p>
-                        ¿Desea Borrar esa red y los nodos asociados?
+                        ¿Desea Borrar la red { netSelected } y los nodos asociados?
                     </p>
                 </div>
                 <div className="button__group">
@@ -161,6 +200,18 @@ const Redes = () => {
                 </div>
             </div>
 
+            <div className="card" style={{width: "500px", margin: "0 auto", display: modalNodeDisp ? 'block' : 'none' }}>
+                <div className="info__padding" >
+                    <h3>Borrar Nodo</h3>
+                    <p>
+                        ¿Desea Borrar el Nodo { nodeSelected } de la red { netSelected } ?
+                    </p>
+                </div>
+                <div className="button__group">
+                    <button onClick={closeModal}>Cancelar</button>
+                    <button onClick={deleteModalNodeConfirm}>Borrar</button>
+                </div>
+            </div>
         </main>
 
     )
